@@ -1,0 +1,111 @@
+name: Deploy Workers
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-workers-deployment
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main' && github.repository == 'Krishang-Zinzuwadia/campusbridge-placement-portal'
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy demo and live Workers
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: cloudflare-workers
+      url: https://campusbridge-live.krishangzinzuwadia.workers.dev
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Verify deployment credential is configured
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Add the scoped CLOUDFLARE_API_TOKEN secret to the cloudflare-workers environment or repository. See docs/ci-cd.md."
+            exit 1
+          fi
+      - name: Check out validated revision
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Set up Node.js without shared dependency cache
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install locked deployment tools
+        run: npm ci
+      - name: Restore validated production assets
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: campusbridge-build-${{ github.sha }}
+          path: dist/
+      - name: Apply demo database migrations
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: npx --no-install wrangler d1 migrations apply campusbridge-portal-db --remote
+      - name: Synchronize canonical demo credentials only
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: npx --no-install wrangler d1 execute campusbridge-portal-db --remote --file scripts/migrate-demo-credentials.sql
+      - name: Deploy existing demo Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: npx --no-install wrangler deploy
+      - name: Apply live database migrations
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: npx --no-install wrangler d1 migrations apply campusbridge-live-db --remote --env production
+      - name: Deploy existing live Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: npx --no-install wrangler deploy --env production
+      - name: Check deployed authentication and access boundaries
+        run: |
+          node --input-type=module <<'NODE'
+          const targets = [
+            ['https://campusbridge-portal.krishangzinzuwadia.workers.dev', 'demo'],
+            ['https://campusbridge-live.krishangzinzuwadia.workers.dev', 'clerk'],
+          ];
+          for (const [origin, provider] of targets) {
+            let failure;
+            for (let attempt = 0; attempt < 4; attempt++) {
+              try {
+                const response = await fetch(origin + '/api/auth/config', {signal: AbortSignal.timeout(15000)});
+                if (!response.ok) throw new Error('Authentication config is unavailable');
+                const config = await response.json();
+                if (config.provider !== provider || !config.enabled || !config.uploadsEnabled) {
+                  throw new Error('Authentication or private upload configuration is incorrect');
+                }
+                const anonymous = await fetch(origin + '/api/state', {signal: AbortSignal.timeout(15000)});
+                if (anonymous.status !== 401) throw new Error('Anonymous workspace access is not denied');
+                console.log(origin + ': expected auth mode, uploads and access boundary verified');
+                failure = undefined;
+                break;
+              } catch (error) {
+                failure = error;
+                if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 5000));
+              }
+            }
+            if (failure) throw failure;
+          }
+          NODE

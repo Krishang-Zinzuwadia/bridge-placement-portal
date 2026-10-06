@@ -1,4 +1,4 @@
-# CampusBridge · WEB-03
+# Bridge · WEB-03
 
 A three-tier campus placement and internship portal with a polished landing page and separate Student, Company Recruiter, and Placement Cell Admin workspaces. Runs directly on a **Cloudflare Worker**, with **D1** persistence. No Sites hosting dependency.
 
@@ -30,18 +30,32 @@ For frontend hot reload, keep `npm run preview` running, then run `npm run dev` 
 
 ## Mock login credentials
 
-All mock accounts use **`Campus@2026`**. Quick demo buttons are also available on `/login`.
+The reviewer demo accepts the username/password pairs below. Quick demo buttons are also available on `/login`. The original email addresses remain compatible aliases for these three accounts, using the new passwords.
 
 These mock credentials apply to the **reviewer demo**. The real-account app uses Clerk Google sign-in and verified email/password registration with its own D1 database. At the project owner's request, that live database also contains illustrative sample companies, openings, applications, and legacy mock records. Mock passwords cannot sign in to the Clerk environment, and a matching email cannot claim a legacy record. After verification, new users choose Student or Recruiter. An institution operator provisions admin access for an existing verified Clerk subject.
 
-| Role | Email | Sample account |
-| --- | --- | --- |
-| Student | `student@campusbridge.demo` | Aarav Sharma · CSE · 8.6 CGPA |
-| Recruiter | `recruiter@campusbridge.demo` | Maya Kapoor · Layers |
-| Admin | `admin@campusbridge.demo` | Ananya Rao · Placement cell |
-| Ineligible student | `ineligible@campusbridge.demo` | Rohan Mehta · CSE · 6.4 CGPA |
+| Role | Username | Password | Compatible email | Sample account |
+| --- | --- | --- | --- | --- |
+| Student | `student` | `student` | `student@campusbridge.demo` | Aarav Sharma · CSE · 8.6 CGPA |
+| Recruiter | `recruiter` | `recruiter` | `recruiter@campusbridge.demo` | Maya Kapoor · Layers |
+| Admin | `admin` | `admin` | `admin@campusbridge.demo` | Ananya Rao · Placement cell |
+
+Secondary illustrative accounts, including `ineligible@campusbridge.demo` (Rohan Mehta · CSE · 6.4 CGPA), retain the sample password `Campus@2026` and use their email to log in.
 
 Companies, institute, people, opportunities, and activity are illustrative demo data. Company URLs in the seed are example URLs. Seeded demo resume links open a built-in illustrative resume preview; replace sample links with accessible real links for real records. Demo accounts share mutable demo records. Application snapshots preserve the original submitted profile. These seeded institutional admin credentials are for reviewer demonstrations; change the seeded credentials before real institutional use.
+
+### Update an existing reviewer demo database
+
+Fresh seeds contain the new role passwords. Existing rows require this explicit demo-only credential migration because normal seeds use `INSERT OR IGNORE`:
+
+```sh
+node scripts/generate-demo-credentials.mjs
+npx wrangler d1 execute campusbridge-portal-db --local --file scripts/migrate-demo-credentials.sql
+# Update the deployed reviewer demo, when authorized:
+npx wrangler d1 execute campusbridge-portal-db --remote --file scripts/migrate-demo-credentials.sql
+```
+
+The script updates only the matching `student-demo`, `recruiter-demo`, and `admin-demo` rows with legacy authentication and their canonical role/email. It preserves IDs, roles, academic profiles, company ownership, application snapshots, and audit records. It is intentionally outside the shared schema migration directory and must not be applied to `campusbridge-live-db`. The Clerk deployment continues to refuse `/api/login`, including these mock usernames.
 
 ## Sample database population
 
