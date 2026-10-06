@@ -21,7 +21,7 @@ ESLint uses the current flat configuration with JavaScript and TypeScript recomm
 
 `.github/workflows/ci.yml` runs for pull requests, all branch pushes, manual requests and reusable workflow calls. Each run installs with `npm ci`, validates GitHub workflow files with actionlint, lints application code, tests isolated auth/database/upload fixtures, type-checks and builds. It saves the validated `dist` artifact for seven days. Tests do not contact or seed the deployed databases.
 
-Actions are pinned to verified commit SHAs, with their major version in a comment. Actionlint's official Linux release is also pinned to version 1.7.12 and verified against its published SHA-256 before execution. Dependabot checks the GitHub Action pins weekly; it does not automatically upgrade application dependencies. CI has read-only repository permissions and does not receive Cloudflare credentials. Fork pull requests use the ordinary `pull_request` event; there is no privileged `pull_request_target` workflow.
+Actions are pinned to verified commit SHAs, with their major version in a comment. Actionlint's official Linux release is also pinned to version 1.7.12 and verified against its published SHA-256 before execution. Dependabot checks the GitHub Action pins weekly; it does not automatically upgrade application dependencies. This follows GitHub's [action pinning guidance](https://docs.github.com/en/actions/reference/security/secure-use) and [Dependabot action-update guidance](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/auto-update-actions). CI has read-only repository permissions and does not receive Cloudflare credentials. Fork pull requests use the ordinary `pull_request` event; there is no privileged `pull_request_target` workflow.
 
 ## Deployment behavior
 
@@ -63,6 +63,7 @@ If a deployment fails, later steps stop. Demo may already be updated when a late
 
 ## Verification and outstanding setup
 
+- A fresh `npm ci` in an isolated copy succeeded, followed by `npm run check`: lint passed, **81 tests passed with 0 failures**, and TypeScript/Vite production build passed. Shared-domain-helper lint coverage was also checked after its addition. Local verification used supported Node.js 22.16; the GitHub runner is configured for Node.js 24.
 - Workflow syntax, expressions, job dependencies and action inputs were checked with checksum-verified official `actionlint` 1.7.12. Actionlint ran without shellcheck because that separate binary is unavailable on the Windows host.
 - The linter was checked against intentional conditional-hook, undefined-backend-global and constant-binary-expression errors; all were rejected by the intended rules.
 - The npm lockfile preserves the installed TypeScript 5.9 and Wrangler line. No force audit downgrade or unrelated dependency migration was performed.
