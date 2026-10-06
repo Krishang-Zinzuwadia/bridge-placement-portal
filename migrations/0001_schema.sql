@@ -1,0 +1,12 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE users (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, salt TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('student','recruiter','admin')), department TEXT NOT NULL DEFAULT '', cgpa REAL NOT NULL DEFAULT 0, graduation_year INTEGER NOT NULL DEFAULT 2027, resume TEXT NOT NULL DEFAULT '', bio TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE sessions (token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires INTEGER NOT NULL);
+CREATE TABLE companies (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES users(id), name TEXT NOT NULL, industry TEXT NOT NULL, website TEXT NOT NULL DEFAULT '', location TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', logo TEXT NOT NULL DEFAULT 'O', color TEXT NOT NULL DEFAULT '#dcedde', status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')), reason TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE jobs (id TEXT PRIMARY KEY, company_id TEXT NOT NULL REFERENCES companies(id), title TEXT NOT NULL, type TEXT NOT NULL CHECK(type IN ('Full-time','Internship')), location TEXT NOT NULL, mode TEXT NOT NULL DEFAULT 'Hybrid', salary TEXT NOT NULL, min_cgpa REAL NOT NULL, departments TEXT NOT NULL, deadline TEXT NOT NULL, description TEXT NOT NULL, skills TEXT NOT NULL DEFAULT '[]', status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('draft','pending','approved','rejected','closed')), reason TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE applications (id TEXT PRIMARY KEY, student_id TEXT NOT NULL REFERENCES users(id), job_id TEXT NOT NULL REFERENCES jobs(id), status TEXT NOT NULL DEFAULT 'Applied', snapshot TEXT NOT NULL, history TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(student_id,job_id));
+CREATE TABLE audit_logs (id TEXT PRIMARY KEY, reviewer_id TEXT NOT NULL REFERENCES users(id), target_id TEXT NOT NULL, target_type TEXT NOT NULL, action TEXT NOT NULL, reason TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE saved_jobs (student_id TEXT NOT NULL REFERENCES users(id), job_id TEXT NOT NULL REFERENCES jobs(id), PRIMARY KEY(student_id,job_id));
+CREATE INDEX applications_job ON applications(job_id);
+CREATE INDEX sessions_expiry ON sessions(expires);
+CREATE INDEX jobs_company ON jobs(company_id);
+CREATE INDEX companies_owner ON companies(owner_id);

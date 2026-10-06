@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {eligibility,canTransition,authorize} from '../worker/rules.mjs';
+test('rejects a student below the CGPA threshold',()=>assert.match(eligibility({cgpa:7.2,department:'CSE',resume:'https://example.com/r'},{min_cgpa:8,departments:'["CSE"]'}).reason,/8/));
+test('rejects a department outside the allowed list',()=>assert.equal(eligibility({cgpa:9,department:'ECE',resume:'https://example.com/r'},{min_cgpa:8,departments:'["CSE"]'}).eligible,false));
+test('accepts CGPA exactly at the threshold',()=>assert.equal(eligibility({cgpa:8,department:'CSE',resume:'https://example.com/r'},{min_cgpa:8,departments:'["CSE"]'}).eligible,true));
+test('requires the resume before submission',()=>assert.equal(eligibility({cgpa:9,department:'CSE',resume:''},{min_cgpa:8,departments:'["CSE"]'}).eligible,false));
+test('does not allow a terminal status to go backwards',()=>assert.equal(canTransition('Selected','Applied'),false));
+test('permits shortlisting an applied candidate',()=>assert.equal(canTransition('Applied','Shortlisted'),true));
+test('blocks students from the admin role',()=>assert.throws(()=>authorize({role:'student'},'admin'),/Forbidden/));
+test('blocks an unauthenticated account',()=>assert.throws(()=>authorize(null,'student'),/Unauthorized/));
