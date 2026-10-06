@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import catalog from '../shared/skills.json' with {type:'json'};
+import {normalizeSkills} from '../worker/skills.mjs';
+test('catalog contains exactly250 distinct skill choices',()=>{const skills=catalog.flatMap(c=>c.skills);assert.equal(skills.length,250);assert.equal(new Set(skills.map(s=>s.toLowerCase())).size,250)});
+test('normalizes known skills and removes duplicate selections',()=>assert.deepEqual(normalizeSkills(['react','TypeScript',' React ']),['React','TypeScript']));
+test('rejects skills outside the selectable catalog',()=>assert.throws(()=>normalizeSkills(['Unlisted made-up skill']),/catalog/));
+test('rejects string instead of a selected-skills array',()=>assert.throws(()=>normalizeSkills('React, CSS'),/array/));
+test('empty skill selection remains valid',()=>assert.deepEqual(normalizeSkills([]),[]));
+test('permits the full catalog without an arbitrary12-skill cutoff',()=>{const skills=catalog.flatMap(c=>c.skills);assert.equal(normalizeSkills(skills).length,250)});

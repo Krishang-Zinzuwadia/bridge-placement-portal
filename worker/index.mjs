@@ -1,4 +1,6 @@
+import {normalizeSkills} from './skills.mjs';
 import {authorize,eligibility,canTransition} from './rules.mjs';
+import {authConfig,verifyClerkIdentity,providerProfile,provisionAccount} from './identity.mjs';
 const json=(body,status=200,headers={})=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store',...headers}});
 const error=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const id=()=>crypto.randomUUID();
@@ -31,15 +33,20 @@ async function state(user,db){
 }
 async function api(request,env){
  const db=env.DB,url=new URL(request.url),path=url.pathname,method=request.method;
+ if(path==='/api/auth/config'&&method==='GET')return json(authConfig(env));
  if(!db)error('Database is unavailable. Apply migrations and seed the database.',503);
  if(!['GET','HEAD'].includes(method)){
   const origin=request.headers.get('Origin');const local=['127.0.0.1','localhost'].includes(url.hostname);
   if(origin&&origin!==url.origin&&!(local&&['127.0.0.1','localhost'].includes(new URL(origin).hostname)))error('Request origin is not allowed.',403);
   if(Number(request.headers.get('Content-Length'))>40000)error('Request is too large.',413);
  }
- const body=method==='GET'?{}:await request.json().catch(()=>({}));
+ // Clerk's request adapter needs the original stream; parse a clone for mutations.
+ const body=['GET','HEAD'].includes(method)||!request.body?{}:await request.clone().json().catch(()=>error('Send a valid JSON object.'));
+ if(!body||typeof body!=='object'||Array.isArray(body))error('Send a valid JSON object.');
+ const usesClerk=env.AUTH_MODE==='clerk';
+ if(usesClerk&&['/api/login','/api/signup','/api/logout'].includes(path))error('Use Clerk to sign in, create an account or sign out.',409);
  if(path==='/api/login'&&method==='POST'){
-  const user=await db.prepare('SELECT * FROM users WHERE email=?').bind(String(body.email||'').trim().toLowerCase()).first();
+  const user=await db.prepare("SELECT * FROM users WHERE email=? AND auth_provider='legacy'").bind(String(body.email||'').trim().toLowerCase()).first();
   if(!user||await hash(String(body.password||''),user.salt)!==user.password)error('Email or password is incorrect.',401);
   return login(user,request,db);
  }
@@ -53,13 +60,24 @@ async function api(request,env){
   if(body.role==='recruiter'){if(!String(body.company||'').trim())error('Enter your company name.');queries.push(db.prepare('INSERT INTO companies(id,owner_id,name,industry,logo) VALUES(?,?,?,?,?)').bind(id(),uid,String(body.company).trim(),'Technology',String(body.company).trim()[0]));}
   await db.batch(queries);return login(await db.prepare('SELECT * FROM users WHERE id=?').bind(uid).first(),request,db);
  }
- const user=authorize(await session(request,db));
+ let account;
+ if(usesClerk){
+  const identity=await verifyClerkIdentity(request,env);
+  account=await db.prepare("SELECT * FROM users WHERE clerk_user_id=? AND auth_provider='clerk'").bind(identity.userId).first();
+  if(path==='/api/onboard'&&method==='POST'){
+   if(!account)account=await provisionAccount(db,await providerProfile(env,identity),body);
+   return json({user:publicUser(account)});
+  }
+  if(!account)throw Object.assign(new Error('Choose your role to finish setting up your workspace.'),{status:403,code:'ONBOARDING_REQUIRED'});
+ }else account=await session(request,db);
+ const user=authorize(account);
  if(path==='/api/state'&&method==='GET')return json(await state(user,db));
  if(path==='/api/logout'&&method==='POST'){const token=request.headers.get('Cookie')?.match(/cb_session=([^;]+)/)?.[1];await db.prepare('DELETE FROM sessions WHERE token=?').bind(token||'').run();return json({ok:true},200,{'Set-Cookie':cookie('',request,true)});}
  if(path==='/api/profile'&&method==='PUT'){
   authorize(user,'student');const {name,department,cgpa,graduation_year,resume,bio}=body;
   if(!name||!['CSE','IT','ECE','EEE','ME','CE','MBA'].includes(department)||!Number.isFinite(Number(cgpa))||Number(cgpa)<0||Number(cgpa)>10||!Number.isInteger(Number(graduation_year))||Number(graduation_year)<2024||Number(graduation_year)>2035||!safeUrl(resume))error('Enter a valid name, department, CGPA (0–10), graduation year and an HTTP(S) resume link.');
-  await db.prepare('UPDATE users SET name=?,department=?,cgpa=?,graduation_year=?,resume=?,bio=? WHERE id=?').bind(String(name).slice(0,100),department,Number(cgpa),Number(graduation_year),String(resume||'').slice(0,2000),String(bio||'').slice(0,2000),user.id).run();return json({ok:true});
+  const selectedSkills=body.skills===undefined?(user.skills||'[]'):JSON.stringify(normalizeSkills(body.skills));
+  await db.prepare('UPDATE users SET name=?,department=?,cgpa=?,graduation_year=?,resume=?,bio=?,skills=? WHERE id=?').bind(String(name).slice(0,100),department,Number(cgpa),Number(graduation_year),String(resume||'').slice(0,2000),String(bio||'').slice(0,2000),selectedSkills,user.id).run();return json({ok:true});
  }
  if(path==='/api/company'&&method==='PUT'){
   authorize(user,'recruiter');const company=await db.prepare('SELECT * FROM companies WHERE owner_id=?').bind(user.id).first();if(!company)error('Company not found.',404);
@@ -71,7 +89,7 @@ async function api(request,env){
   const jid=path.split('/')[3];if(method==='PUT'){const old=await db.prepare('SELECT * FROM jobs WHERE id=? AND company_id=?').bind(jid,company.id).first();if(!old)error('Posting not found.',404);if(body.close){await db.prepare("UPDATE jobs SET status='closed' WHERE id=?").bind(jid).run();return json({ok:true});}}
   const {title,type,location,mode,salary,min_cgpa,departments,deadline,description,skills}=body;
   if(!title||!['Full-time','Internship'].includes(type)||!location||!salary||!Number.isFinite(Number(min_cgpa))||Number(min_cgpa)<0||Number(min_cgpa)>10||!Array.isArray(departments)||!departments.length||departments.some(d=>!['CSE','IT','ECE','EEE','ME','CE','MBA'].includes(d))||!/^\d{4}-\d{2}-\d{2}$/.test(deadline)||new Date(deadline+'T23:59:59Z').getTime()<Date.now()||!description)error('Complete every required field, select valid departments, and choose a future deadline.');
-  const vals=[String(title).slice(0,150),type,String(location).slice(0,100),String(mode||'Hybrid').slice(0,30),String(salary).slice(0,100),Number(min_cgpa),JSON.stringify(departments),deadline,String(description).slice(0,10000),JSON.stringify(Array.isArray(skills)?skills.slice(0,12):[]),body.draft?'draft':'pending'];
+  const vals=[String(title).slice(0,150),type,String(location).slice(0,100),String(mode||'Hybrid').slice(0,30),String(salary).slice(0,100),Number(min_cgpa),JSON.stringify(departments),deadline,String(description).slice(0,10000),JSON.stringify(normalizeSkills(skills||[])),body.draft?'draft':'pending'];
   if(method==='POST')await db.prepare('INSERT INTO jobs(id,company_id,title,type,location,mode,salary,min_cgpa,departments,deadline,description,skills,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(id(),company.id,...vals).run();
   else await db.prepare("UPDATE jobs SET title=?,type=?,location=?,mode=?,salary=?,min_cgpa=?,departments=?,deadline=?,description=?,skills=?,status=?,reason='' WHERE id=?").bind(...vals,jid).run();return json({ok:true});
  }
@@ -99,4 +117,4 @@ async function api(request,env){
  }
  return json({error:'Not found'},404);
 }
-export default {async fetch(request,env){const url=new URL(request.url);try{if(url.pathname.startsWith('/api/'))return await api(request,env);return await env.ASSETS.fetch(request);}catch(e){console.error(e.status?e.message:'Server error');return json({error:e.status?e.message:'Something went wrong. Please try again.'},e.status||500);}}};
+export default {async fetch(request,env){const url=new URL(request.url);try{if(url.pathname.startsWith('/api/'))return await api(request,env);return await env.ASSETS.fetch(request);}catch(e){console.error(e.status?e.message:'Server error');return json({error:e.status?e.message:'Something went wrong. Please try again.',...(e.status&&e.code?{code:e.code}:{})},e.status||500);}}};

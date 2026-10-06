@@ -1,0 +1,19 @@
+CampusBridge self-hosted font sources
+
+Satoshi, Indian Type Foundry
+https://www.fontshare.com/fonts/satoshi
+Official family archive: https://api.fontshare.com/v2/fonts/download/satoshi
+File: Fonts/WEB/fonts/Satoshi-Variable.woff2 (copied without alteration)
+License: satoshi-LICENSE.txt, copied from the official archive.
+
+General Sans, Indian Type Foundry
+https://www.fontshare.com/fonts/general-sans
+Official family archive: https://api.fontshare.com/v2/fonts/download/general-sans
+Files: Fonts/WEB/fonts/GeneralSans-Variable.woff2 and GeneralSans-VariableItalic.woff2
+(copied without alteration)
+License: general-sans-LICENSE.txt, copied from the official archive.
+
+Downloaded 2026-10-06. Both archives contain ITF Free Font License v2.0,
+17 Aug 2026. Section 01 permits self-hosting with CSS @font-face on the
+licensee's websites and applications. These are proprietary freeware,
+not SIL OFL fonts. Consult the complete included license for restrictions.

@@ -1,0 +1,93 @@
+.company-ticker {
+  display: flex;
+  align-items: center;
+  gap: 38px;
+  max-width: 1208px;
+  margin: 7px auto 0;
+  padding: 30px 0 49px;
+  position: relative;
+  border-top: 1px solid #e1e5d6;
+  border-bottom: 1px solid #e1e5d6;
+  overflow: hidden;
+}
+.ticker-intro {font-size: 11px; line-height: 1.9; color: #617255; flex: 0 0 auto; position: relative; z-index: 1}
+.ticker-intro strong {font-weight: 500; color: #485c3b}
+.ticker-window {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 25px, #000 calc(100% - 25px), transparent);
+  padding: 12px 0;
+  outline-offset: -3px;
+}
+.ticker-window:focus-visible {outline: 2px solid #819c67; border-radius: 4px}
+.ticker-track {display: flex; width: max-content; animation: company-drift var(--ticker-duration, 65s) linear infinite; will-change: transform}
+.ticker-group {display: flex; align-items: center; gap: 54px; flex-shrink: 0; padding-right: 54px}
+.ticker-company {display: flex; align-items: center; gap: 9px; white-space: nowrap; color: #65705a; font-family: var(--display); font-weight: 750; font-size: 25px; letter-spacing: -1.1px; min-height: 36px}
+.ticker-company > svg {color: #819c67; flex-shrink: 0}
+.wordmark-orbit {font-weight: 650; letter-spacing: -1.4px}
+.wordmark-northstar {font-weight: 600; letter-spacing: -.7px}
+.wordmark-monograph {font-family: Georgia, serif; font-size: 28px; letter-spacing: -1.4px; font-weight: 600}
+.wordmark-forma {font-weight: 800; letter-spacing: -1.4px}
+.wordmark-canopy {font-family: Georgia, serif; letter-spacing: -.6px; font-weight: 600}
+.wordmark-meridian {font-size: 20px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 550}
+.wordmark-vela {font-size: 28px; font-style: italic; font-weight: 600}
+.wordmark-softline {font-weight: 500; letter-spacing: -.8px}
+.wordmark-fieldwork {font-size: 22px; letter-spacing: -.8px; font-weight: 800}
+.wordmark-openlane {font-weight: 650; letter-spacing: -.6px}
+.ticker-track.paused, .ticker-window:focus-within .ticker-track {animation-play-state: paused}
+@media (hover: hover) {.ticker-window:hover .ticker-track {animation-play-state: paused}}
+.ticker-caption {position: absolute; right: 0; bottom: 7px; display: flex; align-items: center; gap: 12px; font-size: 10px; color: #617255}
+.ticker-control {display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: transparent; border: 0; padding: 7px 8px; min-width: 64px; min-height: 32px; font: inherit; color: #536d43; line-height: 1.4; cursor: pointer; border-radius: 4px}
+.ticker-control:hover {color: #2f4b24; background: #819c6710}
+.ticker-control:focus-visible {outline: 2px solid currentColor; outline-offset: 1px}
+@keyframes company-drift {from {transform: translate3d(0, 0, 0)} to {transform: translate3d(-50%, 0, 0)}}
+html[data-theme="dark"] .company-ticker {border-color: #344835}
+html[data-theme="dark"] .ticker-intro {color: #8eaa7c}
+html[data-theme="dark"] .ticker-intro strong {color: #b4cba3}
+html[data-theme="dark"] .ticker-company {color: #b5cc9d}
+html[data-theme="dark"] .ticker-company > svg {color: #a6c383}
+html[data-theme="dark"] .ticker-caption {color: #a0b990}
+html[data-theme="dark"] .ticker-control {color: #a9c28f}
+html[data-theme="dark"] .ticker-control:hover {color: #d1e7bb; background: #a6c38312}
+@media (min-width: 1550px) {
+  .company-ticker {max-width: 1288px}
+  .ticker-group {gap: 66px; padding-right: 66px}
+  .ticker-company {font-size: 28px}
+  .wordmark-meridian {font-size: 22px}
+}
+@media (max-width: 1190px) {
+  .company-ticker {margin: 7px 32px 0; gap: 28px}
+  .ticker-group {gap: 42px; padding-right: 42px}
+  .ticker-company {font-size: 23px}
+  .wordmark-monograph, .wordmark-vela {font-size: 26px}
+  .wordmark-meridian {font-size: 19px}
+}
+@media (max-width: 760px) {
+  .company-ticker {margin: 18px 25px 0; display: block; padding: 24px 0 53px}
+  .ticker-intro {font-size: 11px; text-align: center}
+  .ticker-intro br {display: none}
+  .ticker-intro strong {margin-left: 4px}
+  .ticker-window {width: 100%; margin-top: 15px; padding: 10px 0 13px}
+  .ticker-group {gap: 36px; padding-right: 36px}
+  .ticker-company {font-size: 24px}
+  .wordmark-monograph, .wordmark-vela {font-size: 26px}
+  .wordmark-meridian {font-size: 19px}
+  .ticker-caption {right: 50%; bottom: 2px; transform: translateX(50%); white-space: nowrap; gap: 12px}
+  .ticker-control {min-height: 44px}
+}
+@media (max-width: 480px) {
+  .company-ticker {margin: 9px 22px 0; padding-top: 23px}
+  .ticker-group {gap: 32px; padding-right: 32px}
+  .ticker-company {font-size: 23px}
+  .wordmark-meridian {font-size: 18px}
+  .ticker-company > svg {width: 24px}
+  .ticker-window {mask-image: linear-gradient(to right, transparent, #000 15px, #000 calc(100% - 15px), transparent)}
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {animation: none !important; transform: none !important; will-change: auto}
+  .ticker-window {overflow-x: auto; mask-image: none; scrollbar-width: thin; scrollbar-color: #819c67 transparent}
+  .ticker-group[aria-hidden="true"] {display: none}
+  .ticker-control {display: none}
+  .ticker-caption {bottom: 12px}
+}

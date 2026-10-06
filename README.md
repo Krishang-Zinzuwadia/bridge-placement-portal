@@ -2,9 +2,15 @@
 
 A three-tier campus placement and internship portal with a polished landing page and separate Student, Company Recruiter, and Placement Cell Admin workspaces. Runs directly on a **Cloudflare Worker**, with **D1** persistence. No Sites hosting dependency.
 
-**Live app:** [campusbridge-portal.krishangzinzuwadia.workers.dev](https://campusbridge-portal.krishangzinzuwadia.workers.dev)
+**Real-account app:** [campusbridge-live.krishangzinzuwadia.workers.dev](https://campusbridge-live.krishangzinzuwadia.workers.dev)
+
+**Reviewer demo:** [campusbridge-portal.krishangzinzuwadia.workers.dev](https://campusbridge-portal.krishangzinzuwadia.workers.dev)
 
 **Public repository:** [Krishang-Zinzuwadia/campusbridge-placement-portal](https://github.com/Krishang-Zinzuwadia/campusbridge-placement-portal)
+
+## Tech stack
+
+React 19, TypeScript, Vite, native CSS, Phosphor icons, self-hosted Satoshi and General Sans fonts, a Cloudflare Worker API, Cloudflare D1 (SQLite), and Clerk for real-account identity. Demo accounts use the separate reviewer environment's existing cookie authentication.
 
 ## Local setup
 
@@ -26,6 +32,8 @@ For frontend hot reload, keep `npm run preview` running, then run `npm run dev` 
 
 All mock accounts use **`Campus@2026`**. Quick demo buttons are also available on `/login`.
 
+These mock credentials apply to the **reviewer demo**. The real-account app uses Clerk Google sign-in and verified email/password registration; it has its own D1 database and no shared seeded accounts. After verification, new users choose Student or Recruiter. An institution operator provisions admin access for an existing verified Clerk subject.
+
 | Role | Email | Sample account |
 | --- | --- | --- |
 | Student | `student@campusbridge.demo` | Aarav Sharma · CSE · 8.6 CGPA |
@@ -46,6 +54,17 @@ npx wrangler d1 execute campusbridge-portal-db --local --file scripts/seed.sql
 
 ## Cloudflare deployment
 
+The default Worker is the reviewer demo. The `production` Wrangler environment deploys `campusbridge-live` against the independently configured `campusbridge-live-db` with `AUTH_MODE=clerk`. This Wrangler environment name does not change Clerk's instance type: the currently connected Clerk application is its **development instance**. A production Clerk instance requires an owned domain, DNS configuration, and provider-owned OAuth credentials. See [Clerk's production deployment guide](https://clerk.com/docs/guides/development/deployment/production).
+
+To deploy the connected real-account environment:
+
+```sh
+npm run db:migrate:live
+npm run deploy:live
+```
+
+`CLERK_SECRET_KEY` is stored as a Cloudflare Worker secret. The publishable key is safe public configuration. Runtime `/api/auth/config` exposes no secret. For a new deployment, configure the publishable key and exact `CLERK_AUTHORIZED_PARTIES` origins in the environment; upload the backend secret with `npx wrangler secret put CLERK_SECRET_KEY --env production` using the interactive stdin prompt. Never place backend keys in frontend code or Git.
+
 The checked-in configuration points to the requested deployment account and its dedicated database. To deploy in a different account, replace `account_id` and create a D1 database; update its `database_id` and `database_name` in `wrangler.jsonc`.
 
 ```sh
@@ -62,7 +81,9 @@ Do not create a second database if you are deploying to the already configured a
 ## Workflows
 
 - **Public:** editorial landing page, responsive navigation, product overview, role explanations, FAQs, registration and login.
+- **Company showcase:** twelve sample company wordmarks in a continuously moving ticker, with hover/focus/manual pause, a seamless loop, and a static scrollable alternative under reduced motion.
 - **Student:** dashboard, approved opportunity discovery, search/type/work-mode/eligibility filters, saved openings, job detail, application confirmation, application lists and timelines, profile editor.
+- **Skills:** exactly250 distinct skills in ten categories, with search, multiple selection, chips, clear/remove controls, keyboard navigation, persistent profile/posting selections, and opportunity filtering. Both frontend and Worker use `shared/skills.json` as the catalog.
 - **Recruiter:** company profile submission, posting creation/editing/drafts/closing, approval feedback, owned candidate list, submitted profile/resume review, CSV export, single and batch stage transitions.
 - **Admin:** separate company/posting queues, complete review pages, approval/rejection with feedback, application oversight, searchable audit log with reviewer IDs and timestamps.
 
@@ -79,6 +100,8 @@ npm run build
 
 The test suite covers eligibility thresholds, department/resume gating, role authorization, password checks, scoped state, duplicate submission, snapshot persistence, recruiter ownership, all-or-nothing batch validation, status history, company-before-posting approval, rejection reasons, audit timestamps/reviewer IDs, admin signup blocking, expired/revoked sessions, and cross-origin request rejection. Integration tests use Node's built-in SQLite to execute the actual Worker queries against the actual schema and seed. Node 22 may print an experimental SQLite warning.
 
+The current suite has **55 passing tests**, including real Clerk SDK signature/expiry/origin/issuer checks, public-key-only configuration, legacy-auth refusal in Clerk mode, verified-email onboarding, no email-based account claiming, persisted D1 roles, and validated profile skills. A temporary provider-created QA account was also tested with a real Frontend API origin-bound Clerk session against the live Worker; onboarding, profile/skills persistence, permission denial, and legacy login refusal passed. The QA identity and D1 profile were removed afterward.
+
 ## Reviewer walkthrough
 
 1. Open the student demo; browse openings and inspect the 9.0-CGPA Machine Learning Intern role to see an explanatory eligibility notice.
@@ -91,4 +114,4 @@ The test suite covers eligibility thresholds, department/resume gating, role aut
 
 `src/Landing.tsx`, `src/Auth.tsx`, and `src/Portal.tsx` define public/entry/shared layouts. `src/Student.tsx`, `src/Recruiter.tsx`, and `src/Admin.tsx` implement role workflows. `src/core.tsx` contains shared UI, API access, and modal keyboard behavior. `worker/index.mjs` handles sessions and the API; `worker/rules.mjs` contains business rules. D1 schema lives in `migrations/0001_schema.sql`; demo population lives in `scripts/`.
 
-The layout adapts to mobile with a collapsible sidebar, opportunity cards, scrollable data tables, and stacked detail/forms. Modal dialogs trap keyboard focus, restore focus on close, and support Escape. Motion respects reduced-motion preferences. The landing hero is generated 3D architectural artwork; the logo and auth illustration are original SVG. Manrope and DM Sans are self-hosted with their OFL licenses. Light/dark appearance controls preserve the forest-green brand. Design refinements use the installed taste-skill design and redesign guidance.
+The layout adapts to mobile with a collapsible sidebar, opportunity cards, scrollable data tables, and stacked detail/forms. Modal dialogs trap keyboard focus, restore focus on close, and support Escape. Motion respects reduced-motion preferences. The landing hero is generated 3D architectural artwork; the logo and auth illustration are original SVG. Satoshi and General Sans are self-hosted, unmodified, with their original ITF Free Font Licenses and source records. Light/dark appearance controls sit in the navbar and workspace header. Header search is icon-only with a working popover; the avatar opens an account menu. The landing footer and visible Live updates indicators were removed. Design refinements use the installed taste-skill guidance.

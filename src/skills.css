@@ -1,0 +1,67 @@
+.skills-select {position: relative; min-width: 0; margin: 0 0 22px; font-family: var(--font); color: var(--ink)}
+.portal .form-panel {overflow:visible}
+.skills-label-row {display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px}
+.skills-label {font-size: 12px; font-weight: 600; color: #566d48}
+.skills-clear {border: 0; background: transparent; padding: 3px 0; font: inherit; font-size: 11px; color: #617e4d; cursor: pointer}
+.skills-anchor {position: relative}
+.skills-trigger {display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 45px; background: #fbfcf7; border: 1px solid #dce5ce; padding: 12px 14px; color: #5d7350; font: inherit; font-size: 12px; text-align: left; cursor: pointer; border-radius: 5px}
+.skills-trigger:hover, .skills-trigger.is-open {border-color: #90a574}
+.skills-trigger-end {display: inline-flex; align-items: center; gap: 10px; color: #6c8355}
+.skills-trigger-end > span {font-size: 10px; border-left: 1px solid #dce5ce; padding-left: 12px; font-variant-numeric: tabular-nums}
+.skills-trigger-end > svg {transform: rotate(90deg)}
+.skills-trigger.is-open .skills-trigger-end > svg {transform: rotate(-90deg)}
+.skills-select button:focus-visible, .skills-select input:focus-visible {outline: 2px solid #789956; outline-offset: 2px}
+.skills-select button:disabled {opacity: .55; cursor: default}
+.skills-popover {position: absolute; top: calc(100% + 7px); left: 0; right: 0; z-index: 35; background: #fcfdf8; border: 1px solid #cbd9b9; border-radius: 7px; box-shadow: 0 10px 28px #203c2217; padding: 10px; min-width: 0}
+.skills-popover.opens-above {top: auto; bottom: calc(100% + 7px)}
+.skills-search {display: flex; align-items: center; gap: 8px; padding: 0 10px; background: #f2f5e9; border: 1px solid #d5e0c4; border-radius: 4px; color: #6b8551}
+.portal .skills-select .skills-search input {min-width: 0; width: 100%; border: 0; background: transparent; box-shadow: none; margin: 0; padding: 10px 0; font: inherit; font-size: 12px; color: #415c33; border-radius: 0}
+.skills-search > button {display: inline-flex; align-items: center; justify-content: center; border: 0; padding: 5px; background: transparent; color: inherit; cursor: pointer}
+.skills-results-summary {font-size: 10px; color: #6e825b; padding: 10px 4px 8px; font-variant-numeric: tabular-nums}
+.skills-options {max-height: min(265px, 40dvh, var(--skills-available-height, 265px)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #a3b78b transparent}
+.skills-group {border: 0; padding: 0; margin: 0 0 11px; min-width: 0}
+.skills-group legend {font-family: var(--display); font-size: 10px; font-weight: 700; color: #789060; padding: 8px 6px 6px; letter-spacing: .03em}
+.portal .skills-select .skills-option {display: flex; flex-direction: row; align-items: center; gap: 9px; padding: 9px 8px; margin: 0; color: #526845; font-size: 12px; font-weight: 450; border-radius: 4px; cursor: pointer; line-height: 1.5; overflow-wrap: anywhere}
+.portal .skills-select .skills-option > span {display:block;font:inherit;color:inherit;flex:1;text-align:left}
+.portal .skills-select .skills-search input:focus {outline:none;box-shadow:none;border:0;background:transparent}
+.skills-search:focus-within {border-color:#90a574;box-shadow:0 0 0 2px #79975715}
+.skills-option:hover, .skills-option:focus-within {background: #edf3e1}
+.skills-option.is-selected {background: #e9f0dc}
+.portal .skills-select .skills-option input {appearance: auto; width: 14px; height: 14px; min-width: 14px; margin: 0; padding: 0; accent-color: #597d3f; border-radius: 2px}
+.skills-option > svg {margin-left: auto; flex-shrink: 0; color: #62814b}
+.skills-no-results {padding: 22px 10px; font-size: 12px; text-align: center; color: #627c4f}
+.skills-no-results > span {display: block; font-size: 11px; margin-top: 7px; color: #7d8c70}
+.skills-popover-footer {display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid #e0e8d4; margin-top: 6px; padding: 9px 3px 0; font-size: 10px; color: #758b60}
+.skills-popover-footer button {display: inline-flex; align-items: center; gap: 5px; padding: 7px 10px; border: 1px solid #cddcb9; border-radius: 4px; background: #e9f0dc; color: #4b6938; font: inherit; cursor: pointer}
+.skills-selected {display: flex; flex-wrap: wrap; gap: 6px; max-height: 136px; overflow-y: auto; margin-top: 10px; scrollbar-width: thin}
+.skills-chip {display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 4px 5px 4px 9px; border: 1px solid #d8e3c9; border-radius: 4px; background: #eff4e7; color: #5b7547; font-size: 10px; overflow-wrap: anywhere}
+.skills-chip button {display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; background: transparent; border: 0; color: #6a8753; cursor: pointer; padding: 4px}
+.skills-helper {display: block; font-size: 11px; line-height: 1.6; margin-top: 8px; color: #718365}
+.browse-skills-filter {max-width: 440px; margin-bottom: 20px}
+.browse-skills-filter .skills-select {margin-bottom: 0}
+.skills-compact .skills-trigger {min-height: 42px}
+.profile-preview-skills {margin: 16px 0; justify-content: center}
+html[data-theme="dark"] .skills-label {color: #aec990}
+html[data-theme="dark"] .skills-trigger {background: #1c3021; border-color: #405a36; color: #b5d098}
+html[data-theme="dark"] .skills-trigger-end {color: #9bbd7c}
+html[data-theme="dark"] .skills-trigger-end > span {border-color: #405a36}
+html[data-theme="dark"] .skills-clear {color: #afc991}
+html[data-theme="dark"] .skills-popover {background: #223727; border-color: #48613b}
+html[data-theme="dark"] .skills-search {background: #1a2d20; border-color: #405c35; color: #a6c583}
+html[data-theme="dark"] .portal .skills-select .skills-search input {background: transparent !important; color: #bdd8a3 !important}
+html[data-theme="dark"] .skills-results-summary, html[data-theme="dark"] .skills-group legend, html[data-theme="dark"] .skills-helper {color: #9fbd83}
+html[data-theme="dark"] .portal .skills-select .skills-option {color: #b1ce94}
+html[data-theme="dark"] .skills-option:hover, html[data-theme="dark"] .skills-option:focus-within, html[data-theme="dark"] .skills-option.is-selected {background: #30492c}
+html[data-theme="dark"] .skills-chip {background: #2a412a; border-color: #435e35; color: #b4ce9b}
+html[data-theme="dark"] .skills-chip button {color: #b4ce9b}
+html[data-theme="dark"] .skills-popover-footer {border-color: #405836; color: #a6c38b}
+html[data-theme="dark"] .skills-popover-footer button {background: #35512d; border-color: #557442; color: #c4dca9}
+html[data-theme="dark"] .skills-no-results, html[data-theme="dark"] .skills-no-results > span {color: #a6c38b}
+@media (max-width: 640px) {
+  .browse-skills-filter {max-width: none}
+  .skills-option {min-height: 42px}
+  .skills-chip button {min-width: 28px; min-height: 28px}
+  .skills-clear {min-height: 32px}
+  .skills-options {max-height: min(250px, 38dvh, var(--skills-available-height, 250px))}
+  .skills-popover {padding: 8px}
+}

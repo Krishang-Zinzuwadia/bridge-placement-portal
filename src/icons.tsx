@@ -1,0 +1,117 @@
+import {forwardRef} from 'react';
+import {ArrowLeftIcon} from '@phosphor-icons/react/dist/csr/ArrowLeft';
+import {ArrowRightIcon} from '@phosphor-icons/react/dist/csr/ArrowRight';
+import {ArrowUpRightIcon} from '@phosphor-icons/react/dist/csr/ArrowUpRight';
+import {CheckIcon} from '@phosphor-icons/react/dist/csr/Check';
+import {CheckCircleIcon} from '@phosphor-icons/react/dist/csr/CheckCircle';
+import {XIcon} from '@phosphor-icons/react/dist/csr/X';
+import {BuildingsIcon} from '@phosphor-icons/react/dist/csr/Buildings';
+import {BriefcaseIcon} from '@phosphor-icons/react/dist/csr/Briefcase';
+import {ShieldCheckIcon} from '@phosphor-icons/react/dist/csr/ShieldCheck';
+import {ArrowSquareOutIcon} from '@phosphor-icons/react/dist/csr/ArrowSquareOut';
+import {ClockIcon} from '@phosphor-icons/react/dist/csr/Clock';
+import {ScrollIcon} from '@phosphor-icons/react/dist/csr/Scroll';
+import {MapPinIcon} from '@phosphor-icons/react/dist/csr/MapPin';
+import {UsersIcon} from '@phosphor-icons/react/dist/csr/Users';
+import {SquaresFourIcon} from '@phosphor-icons/react/dist/csr/SquaresFour';
+import {CompassIcon} from '@phosphor-icons/react/dist/csr/Compass';
+import {BookmarkSimpleIcon} from '@phosphor-icons/react/dist/csr/BookmarkSimple';
+import {UserCircleIcon} from '@phosphor-icons/react/dist/csr/UserCircle';
+import {ClipboardTextIcon} from '@phosphor-icons/react/dist/csr/ClipboardText';
+import {SignOutIcon} from '@phosphor-icons/react/dist/csr/SignOut';
+import {MagnifyingGlassIcon} from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
+import {BellIcon} from '@phosphor-icons/react/dist/csr/Bell';
+import {ListIcon} from '@phosphor-icons/react/dist/csr/List';
+import {CaretRightIcon} from '@phosphor-icons/react/dist/csr/CaretRight';
+import {PlusIcon} from '@phosphor-icons/react/dist/csr/Plus';
+import {GraduationCapIcon} from '@phosphor-icons/react/dist/csr/GraduationCap';
+import {EyeIcon} from '@phosphor-icons/react/dist/csr/Eye';
+import {EyeSlashIcon} from '@phosphor-icons/react/dist/csr/EyeSlash';
+import {WarningCircleIcon} from '@phosphor-icons/react/dist/csr/WarningCircle';
+import {CircleNotchIcon} from '@phosphor-icons/react/dist/csr/CircleNotch';
+import {FileTextIcon} from '@phosphor-icons/react/dist/csr/FileText';
+import {SlidersHorizontalIcon} from '@phosphor-icons/react/dist/csr/SlidersHorizontal';
+import {FloppyDiskIcon} from '@phosphor-icons/react/dist/csr/FloppyDisk';
+import {DownloadSimpleIcon} from '@phosphor-icons/react/dist/csr/DownloadSimple';
+import {StackIcon} from '@phosphor-icons/react/dist/csr/Stack';
+import {PlanetIcon} from '@phosphor-icons/react/dist/csr/Planet';
+import {StarIcon} from '@phosphor-icons/react/dist/csr/Star';
+import {ColumnsIcon} from '@phosphor-icons/react/dist/csr/Columns';
+import {LeafIcon} from '@phosphor-icons/react/dist/csr/Leaf';
+import {WindIcon} from '@phosphor-icons/react/dist/csr/Wind';
+import {ShapesIcon} from '@phosphor-icons/react/dist/csr/Shapes';
+import {StackSimpleIcon} from '@phosphor-icons/react/dist/csr/StackSimple';
+import {FlowerIcon} from '@phosphor-icons/react/dist/csr/Flower';
+import {PauseIcon} from '@phosphor-icons/react/dist/csr/Pause';
+import {PlayIcon} from '@phosphor-icons/react/dist/csr/Play';
+import {PaperPlaneTiltIcon} from '@phosphor-icons/react/dist/csr/PaperPlaneTilt';
+import {SparkleIcon} from '@phosphor-icons/react/dist/csr/Sparkle';
+import {SunIcon} from '@phosphor-icons/react/dist/csr/Sun';
+import {MoonIcon} from '@phosphor-icons/react/dist/csr/Moon';
+import type {Icon,IconProps,IconWeight} from '@phosphor-icons/react/dist/lib/types';
+
+/** Keep our UI vocabulary stable while Phosphor supplies the visual language. */
+type CampusIconProps=IconProps;
+function campusIcon(name:string,Component:Icon,defaultWeight:IconWeight='regular'){
+  const IconComponent=forwardRef<SVGSVGElement,CampusIconProps>(function CampusIcon(
+    {fill,stroke,strokeWidth,strokeLinecap,strokeLinejoin,weight,...props},ref,
+  ){
+    // Lucide's outline styling must not override Phosphor's filled SVG paths.
+    // Saved bookmarks retain their filled state without leaking a `fill` prop.
+    const resolvedWeight=weight||(name==='Bookmark'&&fill&&fill!=='none'?'fill':defaultWeight);
+    return <Component {...props} ref={ref} weight={resolvedWeight} aria-hidden={props['aria-label']||props.alt?undefined:true}/>;
+  });
+  IconComponent.displayName=name;
+  return IconComponent;
+}
+
+export const ArrowLeft=campusIcon('ArrowLeft',ArrowLeftIcon);
+export const ArrowRight=campusIcon('ArrowRight',ArrowRightIcon);
+export const ArrowUpRight=campusIcon('ArrowUpRight',ArrowUpRightIcon);
+export const MoveUpRight=ArrowUpRight;
+export const Check=campusIcon('Check',CheckIcon);
+export const CheckCircle2=campusIcon('CheckCircle2',CheckCircleIcon);
+export const X=campusIcon('X',XIcon);
+export const Building2=campusIcon('Building2',BuildingsIcon,'duotone');
+export const Briefcase=campusIcon('Briefcase',BriefcaseIcon,'duotone');
+export const ShieldCheck=campusIcon('ShieldCheck',ShieldCheckIcon,'duotone');
+export const ExternalLink=campusIcon('ExternalLink',ArrowSquareOutIcon);
+export const Clock=campusIcon('Clock',ClockIcon);
+export const ScrollText=campusIcon('ScrollText',ScrollIcon,'duotone');
+export const MapPin=campusIcon('MapPin',MapPinIcon);
+export const Users=campusIcon('Users',UsersIcon,'duotone');
+export const LayoutDashboard=campusIcon('LayoutDashboard',SquaresFourIcon,'duotone');
+export const Compass=campusIcon('Compass',CompassIcon,'duotone');
+export const Bookmark=campusIcon('Bookmark',BookmarkSimpleIcon);
+export const UserRound=campusIcon('UserRound',UserCircleIcon,'duotone');
+export const ClipboardCheck=campusIcon('ClipboardCheck',ClipboardTextIcon,'duotone');
+export const LogOut=campusIcon('LogOut',SignOutIcon);
+export const Search=campusIcon('Search',MagnifyingGlassIcon);
+export const Bell=campusIcon('Bell',BellIcon);
+export const Menu=campusIcon('Menu',ListIcon);
+export const ChevronRight=campusIcon('ChevronRight',CaretRightIcon);
+export const Plus=campusIcon('Plus',PlusIcon);
+export const GraduationCap=campusIcon('GraduationCap',GraduationCapIcon,'duotone');
+export const Eye=campusIcon('Eye',EyeIcon);
+export const EyeOff=campusIcon('EyeOff',EyeSlashIcon);
+export const AlertCircle=campusIcon('AlertCircle',WarningCircleIcon);
+export const LoaderCircle=campusIcon('LoaderCircle',CircleNotchIcon);
+export const FileText=campusIcon('FileText',FileTextIcon,'duotone');
+export const SlidersHorizontal=campusIcon('SlidersHorizontal',SlidersHorizontalIcon);
+export const Save=campusIcon('Save',FloppyDiskIcon);
+export const Download=campusIcon('Download',DownloadSimpleIcon);
+export const Layers=campusIcon('Layers',StackIcon,'duotone');
+export const Orbit=campusIcon('Orbit',PlanetIcon,'duotone');
+export const Star=campusIcon('Star',StarIcon,'duotone');
+export const Columns3=campusIcon('Columns3',ColumnsIcon,'duotone');
+export const Leaf=campusIcon('Leaf',LeafIcon,'duotone');
+export const Wind=campusIcon('Wind',WindIcon);
+export const Shapes=campusIcon('Shapes',ShapesIcon,'duotone');
+export const SquareStack=campusIcon('SquareStack',StackSimpleIcon,'duotone');
+export const Flower2=campusIcon('Flower2',FlowerIcon,'duotone');
+export const Pause=campusIcon('Pause',PauseIcon);
+export const Play=campusIcon('Play',PlayIcon);
+export const Send=campusIcon('Send',PaperPlaneTiltIcon,'duotone');
+export const Sparkles=campusIcon('Sparkles',SparkleIcon,'duotone');
+export const Sun=campusIcon('Sun',SunIcon,'duotone');
+export const Moon=campusIcon('Moon',MoonIcon,'duotone');

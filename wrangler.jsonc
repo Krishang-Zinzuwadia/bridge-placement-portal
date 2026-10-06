@@ -1,10 +1,50 @@
 {
- "name":"campusbridge-portal",
- "main":"worker/index.mjs",
- "compatibility_date":"2026-10-06",
- "account_id":"22372f05b35ed2d2cf9d27b5a49cf807",
- "workers_dev":true,
- "assets":{"directory":"./dist","binding":"ASSETS","not_found_handling":"single-page-application","run_worker_first":["/api/*"]},
- "d1_databases":[{"binding":"DB","database_name":"campusbridge-portal-db","database_id":"da0831a4-9900-4ce2-a404-be25e915fa57","migrations_dir":"migrations"}],
- "observability":{"enabled":true}
+  "name": "campusbridge-portal",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-10-06",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "account_id": "22372f05b35ed2d2cf9d27b5a49cf807",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "campusbridge-portal-db",
+      "database_id": "da0831a4-9900-4ce2-a404-be25e915fa57",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "AUTH_MODE": "demo"
+  },
+  "env": {
+    "production": {
+      "name": "campusbridge-live",
+      "vars": {
+        "AUTH_MODE": "clerk",
+        "CLERK_AUTHORIZED_PARTIES": "https://campusbridge-live.krishangzinzuwadia.workers.dev",
+        "CLERK_PUBLISHABLE_KEY": "pk_test_cG9ldGljLXRvdWNhbi05Mzg0LmNsZXJrLmFjY291bnRzLmRldiQ"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "campusbridge-live-db",
+          "database_id": "b3851646-21af-4cc8-8cb6-b2fd714aa977",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
 }
