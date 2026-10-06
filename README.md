@@ -29,7 +29,7 @@ All mock accounts use **`Campus@2026`**. Quick demo buttons are also available o
 | Admin | `admin@campusbridge.demo` | Ananya Rao · Placement cell |
 | Ineligible student | `ineligible@campusbridge.demo` | Rohan Mehta · CSE · 6.4 CGPA |
 
-Companies, institute, people, opportunities, and activity are illustrative demo data. Resume and company URLs in the seed are example URLs; replace them with accessible links when using real records. Demo accounts share mutable demo records. Application snapshots preserve the original submitted profile. These seeded institutional admin credentials are for reviewer demonstrations; change the seeded credentials before real institutional use.
+Companies, institute, people, opportunities, and activity are illustrative demo data. Company URLs in the seed are example URLs. Seeded demo resume links open a built-in illustrative resume preview; replace sample links with accessible real links for real records. Demo accounts share mutable demo records. Application snapshots preserve the original submitted profile. These seeded institutional admin credentials are for reviewer demonstrations; change the seeded credentials before real institutional use.
 
 ## Sample database population
 
@@ -87,4 +87,4 @@ The test suite covers eligibility thresholds, department/resume gating, role aut
 
 `src/Landing.tsx`, `src/Auth.tsx`, and `src/Portal.tsx` define public/entry/shared layouts. `src/Student.tsx`, `src/Recruiter.tsx`, and `src/Admin.tsx` implement role workflows. `src/core.tsx` contains shared UI, API access, and modal keyboard behavior. `worker/index.mjs` handles sessions and the API; `worker/rules.mjs` contains business rules. D1 schema lives in `migrations/0001_schema.sql`; demo population lives in `scripts/`.
 
-The layout adapts to mobile with a collapsible sidebar, opportunity cards, scrollable data tables, and stacked detail/forms. Modal dialogs trap keyboard focus, restore focus on close, and support Escape. Motion respects reduced-motion preferences. The bridge illustration and logo are original SVG artwork. Typography uses Google Fonts with system fallbacks.
+The layout adapts to mobile with a collapsible sidebar, opportunity cards, scrollable data tables, and stacked detail/forms. Modal dialogs trap keyboard focus, restore focus on close, and support Escape. Motion respects reduced-motion preferences. The landing hero is generated 3D architectural artwork; the logo and auth illustration are original SVG. Manrope and DM Sans are self-hosted with their OFL licenses. Light/dark appearance controls preserve the forest-green brand. Design refinements use the installed taste-skill design and redesign guidance.

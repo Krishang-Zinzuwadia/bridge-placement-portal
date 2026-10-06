@@ -8,6 +8,7 @@ export type Application={id:string;student_id:string;student_name?:string;studen
 export type State={user:User;companies:Company[];jobs:Job[];applications:Application[];students:User[];logs:any[];saved:string[]};
 export const departments=['CSE','IT','ECE','EEE','ME','CE','MBA'];
 export const stages=['Applied','Shortlisted','Interview','Offered','Selected'];
+export const resumeHref=(link:string)=>link?.startsWith('https://example.com/resumes/')?'/demo-resume.html?student='+encodeURIComponent(link.split('/').pop()||'student-demo'):link;
 export const parse=(value:string,fallback:any[]=[])=>{try{return JSON.parse(value)}catch{return fallback}};
 export const date=(value:string,opts?:Intl.DateTimeFormatOptions)=>new Date(value.includes('T')?value:value.replace(' ','T')+'Z').toLocaleDateString('en-IN',opts||{day:'numeric',month:'short',year:'numeric'});
 export function go(path:string){window.history.pushState({},'',path);window.dispatchEvent(new PopStateEvent('popstate'));window.scrollTo({top:0,behavior:'instant'});}
