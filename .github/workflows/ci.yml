@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Lint, test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate GitHub Actions workflows
+        run: |
+          archive=actionlint_1.7.12_linux_amd64.tar.gz
+          curl --fail --location --silent --show-error --retry 3 --connect-timeout 10 --max-time 120 \
+            "https://github.com/rhysd/actionlint/releases/download/v1.7.12/$archive" \
+            --output "$RUNNER_TEMP/$archive"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" .github/workflows/*.yml
+      - name: Lint application and Worker code
+        run: npm run lint
+      - name: Test isolated database, auth and uploads
+        run: npm test
+      - name: Type-check and build production assets
+        run: npm run build
+      - name: Save validated production assets
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: campusbridge-build-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
