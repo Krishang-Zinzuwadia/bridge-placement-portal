@@ -1,6 +1,6 @@
 # CI, linting and Worker deployment
 
-The repository uses GitHub Actions for checks and deployment to its two existing Cloudflare Workers. Deployment automation needs the scoped `CLOUDFLARE_API_TOKEN` secret before it can run successfully. Missing credentials produce an explicit failed deployment step; checks still run without that secret.
+The repository uses GitHub Actions for checks and deployment to its two existing Cloudflare Workers. The scoped `CLOUDFLARE_API_TOKEN` repository secret is configured, and [automatic deployment on main](https://github.com/Krishang-Zinzuwadia/campusbridge-placement-portal/actions/runs/37529205593) passed on 7 October 2026. Fresh setups need their own configured secret; missing credentials produce an explicit failed deployment step, while checks still run without it.
 
 ## Local checks
 
@@ -61,11 +61,12 @@ After the secret and desired environment protections are configured, merge the r
 
 If a deployment fails, later steps stop. Demo may already be updated when a later live step fails, so review each step rather than assuming the two targets changed atomically. Database migrations are not automatically rolled back. Fix the failure and rerun from the same reviewed revision, or review a Worker rollback and any schema compatibility separately.
 
-## Verification and outstanding setup
+## Verification
 
 - A fresh `npm ci` in an isolated copy succeeded, followed by `npm run check`: lint passed, **81 tests passed with 0 failures**, and TypeScript/Vite production build passed. Shared-domain-helper lint coverage was also checked after its addition. Local verification used supported Node.js 22.16; the GitHub runner is configured for Node.js 24.
 - Workflow syntax, expressions, job dependencies and action inputs were checked with checksum-verified official `actionlint` 1.7.12. Actionlint ran without shellcheck because that separate binary is unavailable on the Windows host.
 - The linter was checked against intentional conditional-hook, undefined-backend-global and constant-binary-expression errors; all were rejected by the intended rules.
 - The npm lockfile preserves the installed TypeScript 5.9 and Wrangler line. No force audit downgrade or unrelated dependency migration was performed.
-- GitHub execution/deployment is not claimed until the new workflows are pushed and a run completes. The repository's Cloudflare deployment secret was reported missing during setup; credential provisioning must complete before CD can succeed.
+- [Main CI](https://github.com/Krishang-Zinzuwadia/campusbridge-placement-portal/actions/runs/37529204809) and [automatic deployment](https://github.com/Krishang-Zinzuwadia/campusbridge-placement-portal/actions/runs/37529205593) passed. Deployment validated on Node 24, restored the validated assets, applied both database migration steps, synchronized credentials only in the demo database, deployed both Workers and passed post-deployment smoke checks. The token was encrypted using GitHub's repository public key before storage; no token value is present in the repository or the frontend bundle.
+- The actual `cloudflare-workers` GitHub environment allows only the `main` branch and denies tag deployment. This restriction was configured and verified through GitHub's API, in addition to the workflow's repository/ref guard. No manual-review gate was added.
 - `npm audit` currently reports three high-severity entries in the existing Wrangler → Miniflare → sharp development-tool chain. Its suggested automatic fix downgrades Wrangler outside this project's requested range. That downgrade was not applied; review a compatible upstream remediation separately. These entries are not introduced by the lint packages.
