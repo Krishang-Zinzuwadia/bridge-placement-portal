@@ -1,0 +1,40 @@
+.user-avatar {display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border-radius: 50%; background: #e0eacf; color: #526e3f; font-family: var(--display); font-weight: 600; width: 38px; height: 38px; vertical-align: middle}
+.user-avatar > img {display: block; width: 100%; height: 100%; object-fit: cover}
+.user-avatar.large-avatar {width: 68px; height: 68px; font-size: 22px}
+.upload-picker {margin-bottom: 22px; font-family: var(--font); min-width: 0}
+.upload-label {display: block; margin-bottom: 9px; color: #566d48; font-size: 12px; font-weight: 600}
+.upload-picker-row {display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid #dce5ce; border-radius: 5px; background: #f8faf3; min-width: 0}
+.upload-symbol {display: flex; align-items: center; color: #789459; flex-shrink: 0}
+.upload-copy {min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 5px}
+.upload-copy > strong {font-size: 12px; font-weight: 550; color: #566e45; overflow-wrap: anywhere}
+.upload-copy > span {font-size: 10px; color: #708460}
+.upload-file-input {display: none !important}
+.upload-choose {border: 1px solid #cedcb9; border-radius: 4px; padding: 9px 12px; color: #55753d; background: #edf3e3; font: inherit; font-size: 11px; font-weight: 550; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; cursor: pointer}
+.upload-choose:hover {background: #e3edce; border-color: #a5bd86}
+.upload-choose:focus-visible, .upload-current-link:focus-visible {outline: 2px solid #789956; outline-offset: 3px}
+.upload-choose:disabled {opacity: .6; cursor: default}
+.upload-current-link {display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; color: #5a7b40; font-size: 11px; text-decoration: underline; text-underline-offset: 3px}
+.upload-success {display: flex; align-items: center; gap: 5px; margin-top: 9px; color: #5f7b49; font-size: 11px; line-height: 1.6}
+.upload-error {display: block; margin-top: 9px; color: #a64734; font-size: 11px; line-height: 1.6; overflow-wrap: anywhere}
+.resume-link-error {max-width: 100%}
+.upload-sr-only {position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0}
+.upload-compact {margin: 12px 0 0}
+.upload-compact .upload-label {font-size: 11px}
+.upload-compact .upload-picker-row {padding: 10px; gap: 9px; flex-wrap: wrap}
+.upload-compact .upload-copy > strong {font-size: 11px}
+.profile-photo-picker {margin: 14px 0 18px; text-align: left}
+html[data-theme="dark"] .user-avatar {background: #38502d; color: #c5dba6}
+html[data-theme="dark"] .upload-label, html[data-theme="dark"] .upload-copy > strong {color: #b2ce97}
+html[data-theme="dark"] .upload-picker-row {background: #223826; border-color: #425d36}
+html[data-theme="dark"] .upload-copy > span {color: #a1bb85}
+html[data-theme="dark"] .upload-symbol {color: #a6c47f}
+html[data-theme="dark"] .upload-choose {background: #344e2d; border-color: #55743f; color: #c0dba1}
+html[data-theme="dark"] .upload-choose:hover {background: #415e34}
+html[data-theme="dark"] .upload-current-link, html[data-theme="dark"] .upload-success {color: #b7d296}
+html[data-theme="dark"] .upload-error {color: #e7ad96}
+@media (max-width: 520px) {
+  .upload-picker-row {flex-wrap: wrap; gap: 10px}
+  .upload-choose {min-height: 40px}
+  .upload-copy {flex-basis: calc(100% - 38px)}
+  .upload-picker-row > .upload-choose {margin-left: 32px}
+}

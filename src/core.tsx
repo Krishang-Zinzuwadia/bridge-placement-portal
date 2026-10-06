@@ -1,7 +1,7 @@
 import React,{createContext,useContext,useEffect,useState} from 'react';
 import {ArrowUpRight,ArrowRight,Check,Search,MapPin,Clock,Bookmark,Briefcase,GraduationCap,X,LoaderCircle,Sun,Moon} from './icons';
 export type Role='student'|'recruiter'|'admin';
-export type User={id:string;name:string;email:string;role:Role;department:string;cgpa:number;graduation_year:number;resume:string;bio:string;skills?:string};
+export type User={id:string;name:string;email:string;role:Role;department:string;cgpa:number;graduation_year:number;resume:string;bio:string;skills?:string;avatar_url?:string;avatar_source?:string};
 export type Job={id:string;company_id:string;company_name:string;logo:string;color:string;title:string;type:string;location:string;mode:string;salary:string;min_cgpa:number;departments:string;deadline:string;description:string;skills:string;status:string;reason:string;created_at:string;company_status?:string};
 export type Company={id:string;name:string;industry:string;website:string;location:string;description:string;logo:string;color:string;status:string;reason:string;owner_name?:string;owner_email?:string;created_at:string};
 export type Application={id:string;student_id:string;student_name?:string;student_email?:string;job_id:string;title:string;company_name:string;logo:string;color:string;status:string;snapshot:string;history:string;created_at:string;salary:string;location:string};

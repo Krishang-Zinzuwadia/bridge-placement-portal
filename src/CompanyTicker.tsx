@@ -1,5 +1,5 @@
-import {useEffect, useRef, useState} from 'react';
-import {Layers, Orbit, Star, Columns3, Leaf, Compass, Wind, Shapes, SquareStack, Flower2, MoveUpRight, Pause, Play} from './icons';
+import {useEffect, useRef} from 'react';
+import {Layers, Orbit, Star, Columns3, Leaf, Compass, Wind, Shapes, SquareStack, Flower2, MoveUpRight} from './icons';
 import './ticker.css';
 
 // Sample wordmarks do not imply partnerships or available vacancies.
@@ -19,7 +19,6 @@ const companies = [
 ];
 
 export function CompanyTicker() {
-  const [paused, setPaused] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +44,7 @@ export function CompanyTicker() {
       </div>
       <div className="ticker-window" tabIndex={0} role="region"
         aria-label="Sample company names. Focus to pause the scrolling showcase.">
-        <div ref={trackRef} className={`ticker-track${paused ? ' paused' : ''}`}>
+        <div ref={trackRef} className="ticker-track">
           {[0, 1].map(copy => (
             <div ref={copy === 0 ? groupRef : undefined} className="ticker-group"
               key={copy} aria-hidden={copy === 1 ? true : undefined}>
@@ -57,15 +56,6 @@ export function CompanyTicker() {
             </div>
           ))}
         </div>
-      </div>
-      <div className="ticker-caption">
-        <span>Illustrative companies</span>
-        <button type="button" className="ticker-control"
-          aria-label={paused ? 'Play company ticker' : 'Pause company ticker'}
-          onClick={() => setPaused(value => !value)}>
-          {paused ? <Play size={12} aria-hidden="true"/> : <Pause size={12} aria-hidden="true"/>}
-          <span>{paused ? 'Play' : 'Pause'}</span>
-        </button>
       </div>
     </section>
   );

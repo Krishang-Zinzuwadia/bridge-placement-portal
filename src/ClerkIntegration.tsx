@@ -1,3 +1,4 @@
+import './auth-form.css';
 import {useEffect,useState} from 'react';
 import {SignIn,SignUp,useAuth,useClerk,useUser} from '@clerk/react';
 import {Building2,GraduationCap,ArrowRight,ShieldCheck} from './icons';
@@ -16,8 +17,8 @@ export function ClerkSessionBridge({onReady}:{onReady:(signedIn:boolean)=>void})
  return null;
 }
 const appearance={
- variables:{colorPrimary:'#253e32',colorText:'var(--ink, #25342b)',colorTextSecondary:'var(--muted, #697269)',colorBackground:'var(--surface, #fffdf8)',colorInputBackground:'var(--surface, #fffdf8)',colorInputText:'var(--ink, #25342b)',borderRadius:'12px',fontFamily:'inherit'},
- elements:{rootBox:{width:'100%'},cardBox:{width:'100%',boxShadow:'none'},card:{boxShadow:'none',padding:'0',background:'transparent'},header:{display:'none'},footer:{background:'transparent'},formButtonPrimary:{boxShadow:'none',minHeight:'46px'},socialButtonsBlockButton:{minHeight:'46px'},formFieldInput:{minHeight:'46px'}}
+ variables:{colorPrimary:'#214c3a',colorText:'#26382d',colorTextSecondary:'#6b7a6c',colorBackground:'#fffefa',colorInputBackground:'#f9fbf7',colorInputText:'#26382d',borderRadius:'8px',fontFamily:'Satoshi, Arial, sans-serif'},
+ elements:{rootBox:{width:'100%'},cardBox:{width:'100%',boxShadow:'none'},card:{boxShadow:'none',padding:'0',background:'transparent'},header:{display:'none'},footer:{background:'transparent'},formButtonPrimary:{background:'var(--auth-primary)',color:'var(--auth-primary-ink)',backgroundImage:'none',boxShadow:'none',minHeight:'50px',fontSize:'14px',fontWeight:600},socialButtonsBlockButton:{minHeight:'50px',border:'1px solid var(--auth-border)',background:'var(--auth-input)',color:'var(--auth-text)'},formFieldInput:{minHeight:'50px',background:'var(--auth-input)',color:'var(--auth-text)',borderColor:'var(--auth-border)'},footerActionLink:{color:'var(--auth-link)',fontWeight:600}}
 };
 export function ClerkAuthForm({signup}:{signup:boolean}){
  return <div className="clerk-auth-form">{signup?<SignUp routing="hash" signInUrl="/login" forceRedirectUrl="/onboarding" appearance={appearance}/>:<SignIn routing="hash" signUpUrl="/signup" forceRedirectUrl="/onboarding" appearance={appearance}/>}<div className="auth-secure"><ShieldCheck size={13}/>Secure sign-in and account recovery by Clerk.</div></div>;

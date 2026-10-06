@@ -1,6 +1,7 @@
 import {normalizeSkills} from './skills.mjs';
 import {authorize,eligibility,canTransition} from './rules.mjs';
-import {authConfig,verifyClerkIdentity,providerProfile,provisionAccount} from './identity.mjs';
+import {authConfig,verifyClerkIdentity,providerProfile,provisionAccount,syncProviderAvatar} from './identity.mjs';
+import {uploadFile,getUpload,validateResumeReference,multipartLimit} from './uploads.mjs';
 const json=(body,status=200,headers={})=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store',...headers}});
 const error=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const id=()=>crypto.randomUUID();
@@ -33,15 +34,16 @@ async function state(user,db){
 }
 async function api(request,env){
  const db=env.DB,url=new URL(request.url),path=url.pathname,method=request.method;
+ const uploadKind=method==='POST'?(path==='/api/resume'?'resume':path==='/api/avatar'?'avatar':null):null;
  if(path==='/api/auth/config'&&method==='GET')return json(authConfig(env));
  if(!db)error('Database is unavailable. Apply migrations and seed the database.',503);
  if(!['GET','HEAD'].includes(method)){
   const origin=request.headers.get('Origin');const local=['127.0.0.1','localhost'].includes(url.hostname);
   if(origin&&origin!==url.origin&&!(local&&['127.0.0.1','localhost'].includes(new URL(origin).hostname)))error('Request origin is not allowed.',403);
-  if(Number(request.headers.get('Content-Length'))>40000)error('Request is too large.',413);
+  if(Number(request.headers.get('Content-Length'))>(uploadKind?multipartLimit(uploadKind):40000))error('Request is too large.',413);
  }
  // Clerk's request adapter needs the original stream; parse a clone for mutations.
- const body=['GET','HEAD'].includes(method)||!request.body?{}:await request.clone().json().catch(()=>error('Send a valid JSON object.'));
+ const body=uploadKind||['GET','HEAD'].includes(method)||!request.body?{}:await request.clone().json().catch(()=>error('Send a valid JSON object.'));
  if(!body||typeof body!=='object'||Array.isArray(body))error('Send a valid JSON object.');
  const usesClerk=env.AUTH_MODE==='clerk';
  if(usesClerk&&['/api/login','/api/signup','/api/logout'].includes(path))error('Use Clerk to sign in, create an account or sign out.',409);
@@ -69,14 +71,18 @@ async function api(request,env){
    return json({user:publicUser(account)});
   }
   if(!account)throw Object.assign(new Error('Choose your role to finish setting up your workspace.'),{status:403,code:'ONBOARDING_REQUIRED'});
+  if(path==='/api/state'&&method==='GET')account=await syncProviderAvatar(db,env,identity,account);
  }else account=await session(request,db);
  const user=authorize(account);
+ if(uploadKind)return json(await uploadFile(request,env,user,uploadKind));
+ if(path.startsWith('/api/uploads/')&&method==='GET')return getUpload(request,env,user,path.slice('/api/uploads/'.length));
  if(path==='/api/state'&&method==='GET')return json(await state(user,db));
  if(path==='/api/logout'&&method==='POST'){const token=request.headers.get('Cookie')?.match(/cb_session=([^;]+)/)?.[1];await db.prepare('DELETE FROM sessions WHERE token=?').bind(token||'').run();return json({ok:true},200,{'Set-Cookie':cookie('',request,true)});}
  if(path==='/api/profile'&&method==='PUT'){
   authorize(user,'student');const {name,department,cgpa,graduation_year,resume,bio}=body;
   if(!name||!['CSE','IT','ECE','EEE','ME','CE','MBA'].includes(department)||!Number.isFinite(Number(cgpa))||Number(cgpa)<0||Number(cgpa)>10||!Number.isInteger(Number(graduation_year))||Number(graduation_year)<2024||Number(graduation_year)>2035||!safeUrl(resume))error('Enter a valid name, department, CGPA (0–10), graduation year and an HTTP(S) resume link.');
   const selectedSkills=body.skills===undefined?(user.skills||'[]'):JSON.stringify(normalizeSkills(body.skills));
+  await validateResumeReference(db,user,resume,request);
   await db.prepare('UPDATE users SET name=?,department=?,cgpa=?,graduation_year=?,resume=?,bio=?,skills=? WHERE id=?').bind(String(name).slice(0,100),department,Number(cgpa),Number(graduation_year),String(resume||'').slice(0,2000),String(bio||'').slice(0,2000),selectedSkills,user.id).run();return json({ok:true});
  }
  if(path==='/api/company'&&method==='PUT'){
