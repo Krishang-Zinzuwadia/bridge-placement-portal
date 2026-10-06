@@ -14,20 +14,20 @@ Demo version: b44a8253-cddd-415f-bfc4-f78945543d74
 
 D1 binding: DB; separate databases: campusbridge-live-db and campusbridge-portal-db
 
-Verified on 6 October 2026:
+Verified on 7 October 2026:
 
 - Landing and hero asset return HTTP 200.
 - Anonymous workspace data requests return HTTP 401.
-- Student login succeeds; role-scoped state contains 6 approved openings and 3 own applications.
-- Recruiter login succeeds; role-scoped state contains 3 owned postings and 8 owned applications.
-- Admin login succeeds; state contains 9 postings, 12 applications and reviewer-attributed audit records.
+- Student demo login succeeds; the verified snapshot contains 6 approved openings and 4 own applications.
+- Recruiter demo login succeeds; the verified snapshot contains 3 owned postings and 9 owned applications.
+- Admin demo login succeeds; the verified snapshot contains 9 postings, 13 applications and reviewer-attributed audit records.
 - Student attempting the admin review API returns HTTP 403.
 - Low-CGPA student attempting an 8.0-CGPA opening returns HTTP 403 with an explanatory notice.
 - Hosted cookies include HttpOnly and Secure.
 - 55 automated tests pass; TypeScript and production Vite build succeed. Auth, icons, React, and application chunks are separated for caching.
 - Browser QA verified application submission and tracking, direct URL role boundary, recruiter batch updates, admin review/audit persistence, mobile width, generated image/font loading, and appearance controls.
 
-Application state uses 15-second polling. Test browser mutations were performed against local D1; deployed demo records retain the initial seed for reviewers.
+Application state uses 15-second polling. Test browser mutations were performed against local D1; the persistent reviewer database is preserved and its records can change as reviewers use it.
 
 ## Connected Clerk verification
 
