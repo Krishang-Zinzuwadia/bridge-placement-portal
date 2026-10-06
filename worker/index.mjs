@@ -51,8 +51,11 @@ async function api(request,env){
  const usesClerk=env.AUTH_MODE==='clerk';
  if(usesClerk&&['/api/login','/api/signup','/api/logout'].includes(path))error('Use Clerk to sign in, create an account or sign out.',409);
  if(path==='/api/login'&&method==='POST'){
-  const user=await db.prepare("SELECT * FROM users WHERE email=? AND auth_provider='legacy'").bind(String(body.email||'').trim().toLowerCase()).first();
-  if(!user||await hash(String(body.password||''),user.salt)!==user.password)error('Email or password is incorrect.',401);
+  const identifier=String(body.username??body.email??'').trim().toLowerCase();
+  const demoUsers={student:'student-demo',recruiter:'recruiter-demo',admin:'admin-demo'};
+  const demoId=Object.hasOwn(demoUsers,identifier)?demoUsers[identifier]:null;
+  const user=demoId?await db.prepare("SELECT * FROM users WHERE id=? AND email=? AND role=? AND auth_provider='legacy'").bind(demoId,identifier+'@campusbridge.demo',identifier).first():await db.prepare("SELECT * FROM users WHERE email=? AND auth_provider='legacy'").bind(identifier).first();
+  if(!user||await hash(String(body.password||''),user.salt)!==user.password)error('Username, email, or password is incorrect.',401);
   return login(user,request,db);
  }
  if(path==='/api/signup'&&method==='POST'){
@@ -81,6 +84,12 @@ async function api(request,env){
  if(path.startsWith('/api/uploads/')&&method==='GET')return getUpload(request,env,user,path.slice('/api/uploads/'.length));
  if(path==='/api/state'&&method==='GET')return json(await state(user,db));
  if(path==='/api/logout'&&method==='POST'){const token=request.headers.get('Cookie')?.match(/cb_session=([^;]+)/)?.[1];await db.prepare('DELETE FROM sessions WHERE token=?').bind(token||'').run();return json({ok:true},200,{'Set-Cookie':cookie('',request,true)});}
+ if(path==='/api/account-profile'&&method==='PUT'){
+  if(!['recruiter','admin'].includes(user.role))error('Forbidden',403);
+  if(typeof body.name!=='string'||!body.name.trim()||body.name.trim().length>100||body.bio!==undefined&&(typeof body.bio!=='string'||body.bio.length>2000))error('Enter a name up to 100 characters and an introduction up to 2,000 characters.');
+  await db.prepare('UPDATE users SET name=?,bio=? WHERE id=?').bind(body.name.trim(),body.bio||'',user.id).run();
+  return json({ok:true});
+ }
  if(path==='/api/profile'&&method==='PUT'){
   authorize(user,'student');const {name,department,cgpa,graduation_year,resume,bio}=body;
   if(!name||!['CSE','IT','ECE','EEE','ME','CE','MBA'].includes(department)||!Number.isFinite(Number(cgpa))||Number(cgpa)<0||Number(cgpa)>10||!Number.isInteger(Number(graduation_year))||Number(graduation_year)<2024||Number(graduation_year)>2035||!safeUrl(resume))error('Enter a valid name, department, CGPA (0–10), graduation year and an HTTP(S) resume link.');

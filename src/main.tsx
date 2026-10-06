@@ -12,7 +12,7 @@ import './style.css';
 import './typography.css';
 import './identity.css';
 function Loading(){return <div className="loading-screen" role="status"><LoaderCircle className="spin"/><span>Preparing your workspace…</span></div>}
-function Mark404(){return <Empty title="This path needs a new direction." description="The page you’re looking for isn’t here. Let’s get you back to your next chapter."><Link to="/" className="btn">Back to CampusBridge</Link></Empty>}
+function Mark404(){return <Empty title="This path needs a new direction." description="The page you’re looking for isn’t here. Let’s get you back to your next chapter."><Link to="/" className="btn">Back to Bridge</Link></Empty>}
 function App({config}:{config:AuthConfig}){
  const [path,setPath]=useState(window.location.pathname),[data,setData]=useState<State|null>(null),[ready,setReady]=useState(false),[needsOnboarding,setNeedsOnboarding]=useState(false),[toast,setToast]=useState<{message:string;error:boolean}|null>(null);
  const usesClerk=config.provider==='clerk';

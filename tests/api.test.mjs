@@ -1,10 +1,43 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
+import {pbkdf2Sync} from 'node:crypto';
 import {readFileSync,readdirSync} from 'node:fs';
 import worker from '../worker/index.mjs';
 function setup(){const sqlite=new DatabaseSync(':memory:');for(const migration of readdirSync('migrations').filter(f=>f.endsWith('.sql')).sort())sqlite.exec(readFileSync('migrations/'+migration,'utf8'));sqlite.exec(readFileSync('scripts/seed.sql','utf8'));const DB={prepare(sql){const stmt=sqlite.prepare(sql);return {bind(...values){return {first:async()=>stmt.get(...values)||null,all:async()=>({results:stmt.all(...values)}),run:async()=>({meta:stmt.run(...values)})}},first:async()=>stmt.get()||null,all:async()=>({results:stmt.all()}),run:async()=>({meta:stmt.run()})}},async batch(queries){sqlite.exec('BEGIN');try{const results=[];for(const q of queries)results.push(await q.run());sqlite.exec('COMMIT');return results}catch(e){sqlite.exec('ROLLBACK');throw e}}};const env={DB,ASSETS:{fetch:()=>new Response('asset')}};return {sqlite,async call(path,{method='GET',body,cookie}={}){const headers={};if(body)headers['Content-Type']='application/json';if(cookie)headers.Cookie=cookie;const response=await worker.fetch(new Request('https://campusbridge.test/api'+path,{method,headers,body:body?JSON.stringify(body):undefined}),env);return {status:response.status,data:await response.json(),cookie:response.headers.get('set-cookie')?.split(';')[0]};},close:()=>sqlite.close()};}
-async function login(s,role){const r=await s.call('/login',{method:'POST',body:{email:role+'@campusbridge.demo',password:'Campus@2026'}});assert.equal(r.status,200);return r.cookie;}
+async function login(s,role){const r=await s.call('/login',{method:'POST',body:{username:role,password:role}});assert.equal(r.status,200);return r.cookie;}
+test('reviewer usernames and matching role passwords open only their persisted workspace',async()=>{const s=setup();for(const role of ['student','recruiter','admin']){const r=await s.call('/login',{method:'POST',body:{username:role,password:role}});assert.equal(r.status,200);assert.equal(r.data.user.id,role+'-demo');assert.equal(r.data.user.role,role);assert.equal((await s.call('/state',{cookie:r.cookie})).data.user.role,role);}s.close()});
+test('demo email aliases still work with updated passwords and incorrect role passwords are rejected',async()=>{const s=setup();for(const role of ['student','recruiter','admin']){assert.equal((await s.call('/login',{method:'POST',body:{email:role+'@campusbridge.demo',password:role}})).status,200);assert.equal((await s.call('/login',{method:'POST',body:{username:role,password:'Campus@2026'}})).status,401);}assert.equal((await s.call('/login',{method:'POST',body:{username:'unknown',password:'admin'}})).status,401);s.close()});
+test('reviewer aliases cannot sign in to the Clerk deployment',async()=>{for(const role of ['student','recruiter','admin']){const response=await worker.fetch(new Request('https://campusbridge.test/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:role,password:role})}),{AUTH_MODE:'clerk',DB:{}});assert.equal(response.status,409);}});
+test('demo credential migration upgrades exact legacy reviewer rows without changing profiles or Clerk accounts',async()=>{const s=setup();for(const role of ['student','recruiter','admin']){const uid=role+'-demo',salt='old-demo-'+role;s.sqlite.prepare('UPDATE users SET password=?,salt=? WHERE id=?').run(pbkdf2Sync('Campus@2026',salt,100000,32,'sha256').toString('hex'),salt,uid);}s.sqlite.prepare("UPDATE users SET auth_provider='clerk',clerk_user_id='user_protected' WHERE id='admin-demo'").run();const protectedAdmin=s.sqlite.prepare("SELECT password,salt FROM users WHERE id='admin-demo'").get();const before=s.sqlite.prepare("SELECT name,cgpa,resume FROM users WHERE id='student-demo'").get();s.sqlite.exec(readFileSync('scripts/migrate-demo-credentials.sql','utf8'));assert.deepEqual(s.sqlite.prepare("SELECT name,cgpa,resume FROM users WHERE id='student-demo'").get(),before);assert.deepEqual(s.sqlite.prepare("SELECT password,salt FROM users WHERE id='admin-demo'").get(),protectedAdmin);for(const role of ['student','recruiter'])assert.equal((await s.call('/login',{method:'POST',body:{username:role,password:role}})).status,200);assert.equal((await s.call('/login',{method:'POST',body:{username:'admin',password:'admin'}})).status,401);s.close()});
+
+test('recruiter and admin can edit only their own personal profile without changing account permissions or company',async()=>{
+ const s=setup();
+ for(const role of ['recruiter','admin']){
+  const cookie=await login(s,role),before=(await s.call('/state',{cookie})).data.user;
+  const companyBefore=s.sqlite.prepare("SELECT * FROM companies WHERE id='c-layers'").get();
+  const result=await s.call('/account-profile',{method:'PUT',cookie,body:{name:'  Updated '+role+'  ',bio:'A personal introduction.',id:'student-demo',role:'student',email:'attacker@example.com',department:'CSE',cgpa:10}});
+  assert.equal(result.status,200);
+  const after=(await s.call('/state',{cookie})).data.user;
+  assert.equal(after.name,'Updated '+role);assert.equal(after.bio,'A personal introduction.');
+  assert.equal(after.id,before.id);assert.equal(after.role,role);assert.equal(after.email,before.email);
+  assert.equal(after.department,before.department);assert.equal(after.cgpa,before.cgpa);
+  assert.deepEqual(s.sqlite.prepare("SELECT * FROM companies WHERE id='c-layers'").get(),companyBefore);
+  assert.equal(s.sqlite.prepare("SELECT name FROM users WHERE id='student-demo'").get().name,'Aarav Sharma');
+ }
+ s.close();
+});
+
+test('personal profile updates validate names and keep student academic editing separate',async()=>{
+ const s=setup(),cookie=await login(s,'recruiter');
+ for(const name of ['   ',null,{},'x'.repeat(101)])assert.equal((await s.call('/account-profile',{method:'PUT',cookie,body:{name,bio:''}})).status,400);
+ assert.equal((await s.call('/account-profile',{method:'PUT',cookie,body:{name:'Maya Kapoor',bio:'x'.repeat(2001)}})).status,400);
+ assert.equal((await s.call('/account-profile',{method:'PUT',body:{name:'Anonymous'}})).status,401);
+ const student=await login(s,'student');
+ assert.equal((await s.call('/account-profile',{method:'PUT',cookie:student,body:{name:'Student'}})).status,403);
+ assert.equal((await s.call('/profile',{method:'PUT',cookie,body:{name:'Recruiter',department:'CSE',cgpa:9,graduation_year:2027}})).status,403);
+ s.close();
+});
 
 test('posting creation rejects malformed and impossible calendar deadlines',async()=>{
  const s=setup(),cookie=await login(s,'recruiter');

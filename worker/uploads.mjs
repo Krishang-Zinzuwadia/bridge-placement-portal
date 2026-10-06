@@ -2,6 +2,7 @@ const fail=(message,status=400,code)=>{throw Object.assign(new Error(message),{s
 export const uploadLimit=kind=>kind==='resume'?5*1024*1024:2*1024*1024;
 export const multipartLimit=kind=>uploadLimit(kind)+64*1024;
 const uploadUrl=(request,id)=>new URL('/api/uploads/'+id,request.url).href;
+// eslint-disable-next-line no-control-regex -- Filenames deliberately strip ASCII control characters.
 const filename=name=>String(name||'upload').split(/[\\/]/).at(-1).replace(/[\x00-\x1f\x7f"<>:;]/g,'_').slice(0,180)||'upload';
 async function boundedBytes(request,limit){
  if(Number(request.headers.get('Content-Length'))>limit)fail('This file is too large.',413);

@@ -1,4 +1,4 @@
-CampusBridge self-hosted font sources
+Bridge self-hosted font sources
 
 Satoshi, Indian Type Foundry
 https://www.fontshare.com/fonts/satoshi
