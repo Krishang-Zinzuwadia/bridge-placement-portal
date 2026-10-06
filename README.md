@@ -2,6 +2,10 @@
 
 A three-tier campus placement and internship portal with a polished landing page and separate Student, Company Recruiter, and Placement Cell Admin workspaces. Runs directly on a **Cloudflare Worker**, with **D1** persistence. No Sites hosting dependency.
 
+**Live app:** [campusbridge-portal.krishangzinzuwadia.workers.dev](https://campusbridge-portal.krishangzinzuwadia.workers.dev)
+
+**Public repository:** [Krishang-Zinzuwadia/campusbridge-placement-portal](https://github.com/Krishang-Zinzuwadia/campusbridge-placement-portal)
+
 ## Local setup
 
 Requires Node.js 22.13+ and npm. From the repository root:
