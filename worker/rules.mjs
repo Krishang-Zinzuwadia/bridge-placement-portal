@@ -7,4 +7,5 @@ export function eligibility(profile,job) {
  return {eligible:true,reason:'Your profile meets the eligibility criteria.'};
 }
 export const pipeline=['Applied','Shortlisted','Interview','Offered','Selected'];
+export {isOpenDeadline} from '../shared/deadline.mjs';
 export function canTransition(from,to) {return from!=='Selected'&&from!=='Rejected'&&(to==='Rejected'||pipeline.indexOf(to)===pipeline.indexOf(from)+1);}

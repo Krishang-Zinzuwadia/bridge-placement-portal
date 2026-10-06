@@ -5,7 +5,29 @@ import {readFileSync,readdirSync} from 'node:fs';
 import worker from '../worker/index.mjs';
 function setup(){const sqlite=new DatabaseSync(':memory:');for(const migration of readdirSync('migrations').filter(f=>f.endsWith('.sql')).sort())sqlite.exec(readFileSync('migrations/'+migration,'utf8'));sqlite.exec(readFileSync('scripts/seed.sql','utf8'));const DB={prepare(sql){const stmt=sqlite.prepare(sql);return {bind(...values){return {first:async()=>stmt.get(...values)||null,all:async()=>({results:stmt.all(...values)}),run:async()=>({meta:stmt.run(...values)})}},first:async()=>stmt.get()||null,all:async()=>({results:stmt.all()}),run:async()=>({meta:stmt.run()})}},async batch(queries){sqlite.exec('BEGIN');try{const results=[];for(const q of queries)results.push(await q.run());sqlite.exec('COMMIT');return results}catch(e){sqlite.exec('ROLLBACK');throw e}}};const env={DB,ASSETS:{fetch:()=>new Response('asset')}};return {sqlite,async call(path,{method='GET',body,cookie}={}){const headers={};if(body)headers['Content-Type']='application/json';if(cookie)headers.Cookie=cookie;const response=await worker.fetch(new Request('https://campusbridge.test/api'+path,{method,headers,body:body?JSON.stringify(body):undefined}),env);return {status:response.status,data:await response.json(),cookie:response.headers.get('set-cookie')?.split(';')[0]};},close:()=>sqlite.close()};}
 async function login(s,role){const r=await s.call('/login',{method:'POST',body:{email:role+'@campusbridge.demo',password:'Campus@2026'}});assert.equal(r.status,200);return r.cookie;}
+
+test('posting creation rejects malformed and impossible calendar deadlines',async()=>{
+ const s=setup(),cookie=await login(s,'recruiter');
+ const body={title:'Calendar validation',type:'Internship',location:'Remote',mode:'Remote',salary:'₹20,000',min_cgpa:0,departments:['CSE'],description:'A valid description',skills:[]};
+ const before=s.sqlite.prepare('SELECT COUNT(*) AS count FROM jobs').get().count;
+ for(const deadline of ['2030-99-99','2030-02-30','2030-04-31']){
+  const result=await s.call('/jobs',{method:'POST',cookie,body:{...body,deadline}});
+  assert.equal(result.status,400,deadline+' should be rejected');
+ }
+ assert.equal(s.sqlite.prepare('SELECT COUNT(*) AS count FROM jobs').get().count,before);
+ assert.equal((await s.call('/jobs',{method:'POST',cookie,body:{...body,deadline:'2032-02-29'}})).status,200);
+ s.close();
+});
 test('anonymous users cannot access workspace data',async()=>{const s=setup();assert.equal((await s.call('/state')).status,401);s.close()});
+
+test('opaque and malformed mutation origins are refused without a server error',async()=>{
+ const s=setup();
+ for(const Origin of ['null','malformed-origin','file://localhost']){
+  const response=await worker.fetch(new Request('http://127.0.0.1/api/review',{method:'POST',headers:{Origin,'Content-Type':'application/json'},body:'{}'}),{DB:s.sqlite});
+  assert.equal(response.status,403,Origin);
+ }
+ s.close();
+});
 test('login sets an HTTP-only cookie and rejects a wrong password',async()=>{const s=setup();const r=await s.call('/login',{method:'POST',body:{email:'student@campusbridge.demo',password:'wrong'}});assert.equal(r.status,401);const cookie=await login(s,'student');assert.ok(cookie.startsWith('cb_session='));s.close()});
 test('student sees approved openings and only their own applications',async()=>{const s=setup(),cookie=await login(s,'student');const r=await s.call('/state',{cookie});assert.equal(r.status,200);assert.equal(r.data.jobs.length,6);assert.equal(r.data.applications.length,3);assert.ok(r.data.applications.every(a=>a.student_id==='student-demo'));assert.equal(r.data.user.password,undefined);assert.equal(r.data.jobs.some(j=>j.status!=='approved'),false);s.close()});
 test('ineligible submission is blocked by the server',async()=>{const s=setup();const r=await s.call('/login',{method:'POST',body:{email:'ineligible@campusbridge.demo',password:'Campus@2026'}});const blocked=await s.call('/apply',{method:'POST',cookie:r.cookie,body:{job_id:'j-product'}});assert.equal(blocked.status,403);assert.match(blocked.data.error,/minimum CGPA/);assert.equal(s.sqlite.prepare("SELECT COUNT(*) AS count FROM applications WHERE student_id='student-low'").get().count,0);s.close()});

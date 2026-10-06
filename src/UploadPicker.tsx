@@ -1,9 +1,10 @@
-import {useEffect, useId, useRef, useState, type AnchorHTMLAttributes, type MouseEvent} from 'react';
-import {FileText, UserRound, LoaderCircle, CheckCircle2, ExternalLink} from './icons';
-import {resumeHref} from './core';
+import {lazy, Suspense, useEffect, useId, useRef, useState, type AnchorHTMLAttributes, type MouseEvent} from 'react';
+import {FileText, UserRound, LoaderCircle, CheckCircle2, ExternalLink, X, Download} from './icons';
+import {resumeHref, useModal} from './core';
 import {fetchUpload, uploadFile} from './services';
 import {managedUploadPath} from './UserAvatar';
 import './uploads.css';
+const PdfPreview = lazy(() => import('./PdfPreview'));
 
 export type UploadKind = 'resume' | 'avatar';
 export type UploadResult = {url: string; filename: string; size: number; type: string};
@@ -84,39 +85,33 @@ type ResumeLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
 export function ResumeLink({resume, children, onClick, onAuxClick, ...props}: ResumeLinkProps) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const urls = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const [preview, setPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const requestId = useRef(0);
   const mounted = useRef(true);
+  useModal(preview);
   useEffect(() => {
     mounted.current = true;
-    return () => {mounted.current = false; for (const [url, timer] of urls.current) {clearTimeout(timer); URL.revokeObjectURL(url);} urls.current.clear();};
+    return () => {mounted.current = false; requestId.current++;};
   }, []);
+  useEffect(() => () => {if (previewUrl) URL.revokeObjectURL(previewUrl);}, [previewUrl]);
   const privatePath = managedUploadPath(resume);
+  function closePreview() {requestId.current++; setPreview(false); setPreviewUrl(''); setBusy(false); setError('');}
   async function openPrivate(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
     if (busy || !privatePath) return;
-    // Reserve the tab during the user gesture, before waiting for a fresh token.
-    const tab = window.open('about:blank', '_blank');
-    if (!tab) {setError('Allow a new tab to view your resume, then try again.'); return;}
-    tab.opener = null;
-    tab.document.title = 'Opening resume';
-    tab.document.body.textContent = 'Opening your resume…';
-    setBusy(true); setError('');
+    const currentRequest = ++requestId.current;
+    setPreview(true); setPreviewUrl(''); setBusy(true); setError('');
     try {
       const blob = await fetchUpload(privatePath);
-      if (!mounted.current) {tab.close(); return;}
-      if (tab.closed) return;
-      const url = URL.createObjectURL(blob);
-      const timer = setTimeout(() => {URL.revokeObjectURL(url); urls.current.delete(url);}, 5 * 60 * 1000);
-      urls.current.set(url, timer);
-      tab.location.replace(url);
+      if (mounted.current && currentRequest === requestId.current) setPreviewUrl(URL.createObjectURL(blob));
     } catch (cause) {
-      tab.close();
-      setError(cause instanceof Error ? cause.message : 'The resume could not be opened. Please try again.');
-    } finally {setBusy(false);}
+      if (mounted.current && currentRequest === requestId.current) setError(cause instanceof Error ? cause.message : 'The resume could not be opened. Please try again.');
+    } finally {if (mounted.current && currentRequest === requestId.current) setBusy(false);}
   }
   return <><a {...props} href={resumeHref(resume)} target="_blank" rel="noreferrer" aria-busy={busy}
     onClick={event => {onClick?.(event); if (!event.defaultPrevented && privatePath) void openPrivate(event);}}
     onAuxClick={event => {onAuxClick?.(event); if (event.button === 1 && !event.defaultPrevented && privatePath) void openPrivate(event);}}>
     {busy ? <LoaderCircle size={14} className="spin"/> : null}{children}
-  </a>{error && <span className="upload-error resume-link-error" role="alert">{error}</span>}</>;
+  </a>{preview && <div className="modal-overlay"><section className="modal resume-preview-modal" role="dialog" aria-modal="true" aria-label="Resume PDF preview"><button type="button" className="modal-close icon-button" aria-label="Close resume preview" onClick={closePreview}><X size={20}/></button><div className="resume-preview-heading"><FileText size={22}/><h2>Resume preview</h2></div>{busy && <div className="resume-preview-loading" role="status"><LoaderCircle size={24} className="spin"/>Opening your PDF…</div>}{error && <p className="upload-error" role="alert">{error}</p>}{previewUrl && <><Suspense fallback={<div className="resume-preview-loading" role="status">Loading PDF viewer…</div>}><PdfPreview url={previewUrl}/></Suspense><div className="resume-preview-actions"><p>You can download the PDF if your browser cannot display it.</p><a className="btn outline" href={previewUrl} download="resume.pdf"><Download size={17}/>Download PDF</a></div></>}<button type="button" className="btn outline" onClick={closePreview}>Back to workspace</button></section></div>}</>;
 }

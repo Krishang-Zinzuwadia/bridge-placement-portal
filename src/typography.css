@@ -73,6 +73,21 @@ html[data-theme='dark'] .appearance-control:hover{background:#293f2b}
 .portal .info-list dd,.portal .detail-panel>p,.portal .detail-tip p,.portal .profile-preview-bio{font-size:14px;line-height:1.7}
 .portal .timeline-step h4{font-size:16px;font-weight:600;letter-spacing:-.01em}
 .portal .timeline-step p,.portal .timeline-step small{font-size:13px;line-height:1.6}
+.portal .date-chip{font-size:12px;line-height:1.5;padding:10px 14px;color:var(--ink);background:var(--white);border:1px solid var(--line)}
+.portal .review-feedback{margin:20px 0 0;padding:16px 18px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:14px;line-height:1.65}
+.portal .upload-label,.portal .upload-copy>strong{font-size:13px;line-height:1.5}
+.portal .upload-copy>span,.portal .upload-current-link,.portal .upload-success,.portal .upload-error{font-size:12px;line-height:1.6}
+.portal .upload-choose{font-size:13px;font-weight:600;min-height:40px}
+.portal .skills-label,.portal .skills-trigger,.portal .skills-option{font-size:14px}
+.portal .skills-helper,.portal .skills-results-summary,.portal .skills-chip{font-size:12px;line-height:1.5}
+html[data-theme='dark'] .portal .date-chip{background:#263c2d;color:#e7f0e3;border-color:#415747}
+html[data-theme='dark'] .portal .review-feedback{background:#263c2d;color:#e7f0e3;border-color:#415747}
+.portal{--muted:#69776b}
+.portal form label,.portal input,.portal select,.portal textarea,.portal table td{color:var(--ink)}
+.portal .page-head p,.portal .form-section-header p,.portal .table-company small,.portal .table-small,.portal .job-meta{color:var(--muted)}
+.portal .tabs>button{font-size:13px;font-weight:550;min-height:40px;line-height:1.5}
+html[data-theme='dark'] .portal{--ink:#e7efe8;--muted:#b1bfb2}
+html[data-theme='dark'] .portal .table-link,html[data-theme='dark'] .portal .panel-heading>a{color:#dcebcf}
 .auth-main .auth-form-wrap h1{font-size:clamp(30px,3vw,40px);line-height:1.2;letter-spacing:-.03em;font-weight:650}
 .auth-main .auth-form-wrap>p{font-size:15px;line-height:1.65}
 .auth-main form label{font-size:14px;line-height:1.5;font-weight:550}
