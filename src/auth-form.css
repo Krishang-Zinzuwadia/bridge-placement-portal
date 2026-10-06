@@ -1,0 +1,29 @@
+/* Explicit surfaces prevent provider contrast calculations from guessing CSS variables. */
+:root{--auth-primary:#214c3a;--auth-primary-ink:#fffefa;--auth-text:#273a2d;--auth-muted:#687b68;--auth-border:#d4e0cf;--auth-input:#f9fbf7;--auth-link:#2d5b3e;--auth-footer:#f1f5e9}
+html[data-theme='dark']{--auth-primary:#dcebb9;--auth-primary-ink:#203e29;--auth-text:#edf4e7;--auth-muted:#b2c6a5;--auth-border:#47644a;--auth-input:#223b2b;--auth-link:#dcebb9;--auth-footer:#203526}
+.auth-main .clerk-auth-form{margin-top:30px;min-height:0}
+.auth-main .clerk-auth-form .cl-cardBox{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+.auth-main .clerk-auth-form .cl-card{padding:0!important;gap:24px!important;background:transparent!important;box-shadow:none!important}
+.auth-main .clerk-auth-form .cl-socialButtonsBlockButton{width:100%;min-height:50px;border:1px solid var(--auth-border)!important;border-radius:8px!important;background:var(--auth-input)!important;background-image:none!important;color:var(--auth-text)!important;box-shadow:none!important;font-family:var(--font);font-size:13px;font-weight:550}
+.auth-main .clerk-auth-form .cl-socialButtonsBlockButtonText{color:var(--auth-text)!important;font-size:13px;font-weight:550}
+.auth-main .clerk-auth-form .cl-socialButtonsBlockButton:hover{border-color:#88a578!important;filter:brightness(1.04)}
+.auth-main .clerk-auth-form .cl-dividerLine{background:var(--auth-border)!important}
+.auth-main .clerk-auth-form .cl-dividerText{color:var(--auth-muted)!important;font-size:12px}
+.auth-main .clerk-auth-form .cl-form{gap:20px!important;margin:0!important}
+.auth-main .clerk-auth-form .cl-formFieldRow{gap:8px!important}
+.auth-main .clerk-auth-form .cl-formFieldLabel{color:var(--auth-text)!important;font-family:var(--font);font-size:12px;font-weight:550;margin:0!important}
+.auth-main .clerk-auth-form .cl-formFieldInput{min-height:50px!important;border:1px solid var(--auth-border)!important;border-radius:8px!important;background:var(--auth-input)!important;color:var(--auth-text)!important;box-shadow:none!important;font-family:var(--font);font-size:14px!important;padding:13px 14px!important}
+.auth-main .clerk-auth-form .cl-formFieldInput::placeholder{color:var(--auth-muted)!important;opacity:.85;font-size:13px!important}
+.auth-main .clerk-auth-form .cl-formFieldInput:focus{border-color:#98b578!important;outline:2px solid #98b57855!important;outline-offset:2px!important;box-shadow:none!important}
+.auth-main .clerk-auth-form .cl-formButtonPrimary{min-height:50px!important;border:0!important;border-radius:8px!important;background:var(--auth-primary)!important;background-image:none!important;color:var(--auth-primary-ink)!important;box-shadow:none!important;text-shadow:none!important;font-family:var(--font);font-size:14px!important;font-weight:650!important;margin-top:2px!important}
+.auth-main .clerk-auth-form .cl-formButtonPrimary:hover{filter:brightness(.95)}
+.auth-main .clerk-auth-form .cl-formButtonPrimary:focus-visible{outline:2px solid #91af6f;outline-offset:3px}
+.auth-main .clerk-auth-form .cl-formButtonPrimary::before,.auth-main .clerk-auth-form .cl-formButtonPrimary::after{background-image:none!important;box-shadow:none!important}
+.auth-main .clerk-auth-form .cl-formButtonPrimary span,.auth-main .clerk-auth-form .cl-formButtonPrimary svg{color:inherit!important}
+.auth-main .clerk-auth-form .cl-footer{margin-top:22px!important;padding:0!important;background:transparent!important;border-radius:0!important}
+.auth-main .clerk-auth-form .cl-footerAction{padding:0 0 18px!important;gap:6px!important;border-bottom:1px solid var(--auth-border)}
+.auth-main .clerk-auth-form .cl-footerActionText{color:var(--auth-muted)!important;font-size:12px}
+.auth-main .clerk-auth-form .cl-footerActionLink,.auth-main .clerk-auth-form .cl-formFieldAction{color:var(--auth-link)!important;font-size:12px;font-weight:650!important;text-decoration:none}
+.auth-main .clerk-auth-form .cl-footerActionLink:hover{text-decoration:underline}
+.auth-main .clerk-auth-form .auth-secure{margin-top:19px;font-size:10px;color:var(--auth-muted);line-height:1.8}
+@media(max-width:480px){.auth-main .clerk-auth-form .cl-card{gap:20px!important}.auth-main .clerk-auth-form .cl-footerAction{flex-wrap:wrap}}

@@ -1,23 +1,27 @@
 import {useEffect,useRef,useState,type FormEvent} from 'react';
-import {LayoutDashboard,Compass,Briefcase,Bookmark,UserRound,Building2,Users,ClipboardCheck,ShieldCheck,ScrollText,LogOut,ArrowUpRight,Search,Bell,Menu,X,ChevronRight,Plus,CheckCircle2,Clock,GraduationCap} from './icons';
-import {useApp,Link,Mark,ThemeToggle,go,Logo,Badge,date,PageHead,Metric,JobCard,Empty} from './core';
+import {LayoutDashboard,Compass,Briefcase,Bookmark,UserRound,Building2,Users,ClipboardCheck,ShieldCheck,ScrollText,LogOut,ArrowUpRight,Search,Bell,Menu,X,ChevronRight,Plus,CheckCircle2,Clock,GraduationCap,LoaderCircle} from './icons';
+import {isOpenDeadline,useApp,Link,Mark,ThemeToggle,go,Logo,Badge,date,PageHead,Metric,JobCard,Empty} from './core';
 import {Student} from './Student';
 import {Recruiter} from './Recruiter';
 import {Admin} from './Admin';
+import {UserAvatar} from './UserAvatar';
+import {validateUploadFile} from './UploadPicker';
+import {uploadFile} from './services';
 import './navigation.css';
 
 const navs={student:[['Overview','',LayoutDashboard],['Explore opportunities','opportunities',Compass],['My applications','applications',Briefcase],['Saved openings','saved',Bookmark],['My profile','profile',UserRound]],recruiter:[['Overview','',LayoutDashboard],['Job postings','postings',Briefcase],['Applicants','applicants',Users],['Company profile','company',Building2]],admin:[['Overview','',LayoutDashboard],['Company approvals','companies',Building2],['Posting approvals','postings',ClipboardCheck],['Applications','applications',Users],['Audit log','logs',ScrollText]]};
 type HeaderPanel='search'|'notifications'|'account'|null;
 
 export function Portal({path,logout}:{path:string;logout:()=>Promise<void>}){
- const {data}=useApp(),u=data.user,role=u.role;
+ const {data,refresh,notify}=useApp(),u=data.user,role=u.role;
  const [mobile,setMobile]=useState(false),[panel,setPanel]=useState<HeaderPanel>(null),[query,setQuery]=useState('');
  const [compact,setCompact]=useState(()=>window.matchMedia('(max-width:760px)').matches);
  const [locationSearch,setLocationSearch]=useState(window.location.search);
  const [searchRevision,setSearchRevision]=useState(0);
+ const [photoBusy,setPhotoBusy]=useState(false),[photoError,setPhotoError]=useState('');
+ const photoInputRef=useRef<HTMLInputElement>(null);
  const actionsRef=useRef<HTMLDivElement>(null),searchRef=useRef<HTMLInputElement>(null),sidebarRef=useRef<HTMLElement>(null),navButtonRef=useRef<HTMLButtonElement>(null),triggerRef=useRef<HTMLButtonElement|null>(null);
  const segment=path.split('/')[2]||'',label=navs[role].find(n=>n[1]===segment)?.[0]||'Overview';
- const initials=u.name.split(' ').map(s=>s[0]).slice(0,2).join('');
  const roleLabel=role==='admin'?'Placement administrator':role==='recruiter'?'Company recruiter':'Student applicant';
  const profileRoute=role==='student'?'/student/profile':role==='recruiter'?'/recruiter/company':null;
  const searchTarget={student:{route:'opportunities',label:'Search opportunities',placeholder:'Role, company, location, or skill'},recruiter:{route:'applicants',label:'Search applicants',placeholder:'Candidate name, email, or role'},admin:{route:'logs',label:'Search audit records',placeholder:'Submission, reviewer ID, or reason'}}[role];
@@ -51,6 +55,18 @@ export function Portal({path,logout}:{path:string;logout:()=>Promise<void>}){
  },[compact,mobile]);
  function togglePanel(next:Exclude<HeaderPanel,null>,trigger:HTMLButtonElement){triggerRef.current=trigger;setPanel(current=>current===next?null:next)}
  function searchWorkspace(event:FormEvent){event.preventDefault();go('/'+role+'/'+searchTarget.route+'?search='+encodeURIComponent(query.trim()));setSearchRevision(value=>value+1);setPanel(null);setQuery('')}
+ async function changePhoto(file:File){
+  if(photoBusy)return;
+  const validation=validateUploadFile('avatar',file);
+  if(validation){setPhotoError(validation);notify(validation,true);return}
+  setPhotoError('');setPhotoBusy(true);
+  try{
+   await uploadFile('avatar',file);
+   try{await refresh();notify('Profile photo updated.')}
+   catch{notify('Your photo was saved. Reload your workspace to see the update.',true)}
+  }catch(error){const message=error instanceof Error?error.message:'Could not upload your photo. Please try again.';setPhotoError(message);notify(message,true)}
+  finally{setPhotoBusy(false)}
+ }
 
  return <div className="portal">
   {compact&&mobile&&<button className="sidebar-overlay" aria-label="Close navigation" onClick={()=>setMobile(false)}/>}
@@ -61,7 +77,7 @@ export function Portal({path,logout}:{path:string;logout:()=>Promise<void>}){
    <nav className="sidebar-nav" aria-label="Workspace pages" onClick={event=>{if((event.target as HTMLElement).closest('a'))setMobile(false)}}>
     {navs[role].map(([name,route,Icon]:any)=><Link key={route} to={'/'+role+(route?'/'+route:'')} className={segment===route?'active':''} aria-current={segment===route?'page':undefined}><Icon size={20}/><span>{name}</span>{role==='admin'&&route==='companies'&&data.companies.filter(c=>c.status==='pending').length>0&&<small className="nav-count">{data.companies.filter(c=>c.status==='pending').length}</small>}{role==='admin'&&route==='postings'&&data.jobs.filter(j=>j.status==='pending').length>0&&<small className="nav-count">{data.jobs.filter(j=>j.status==='pending').length}</small>}</Link>)}
    </nav>
-   <div className="sidebar-bottom"><div className="sidebar-user"><div className="avatar">{initials}</div><div className="sidebar-user-info"><strong>{u.name}</strong><small>{roleLabel}</small></div><button onClick={()=>void logout()} aria-label="Sign out" title="Sign out"><LogOut size={20}/></button></div></div>
+   <div className="sidebar-bottom"><div className="sidebar-user"><UserAvatar name={u.name} src={u.avatar_url} className="avatar" size={35}/><div className="sidebar-user-info"><strong>{u.name}</strong><small>{roleLabel}</small></div><button onClick={()=>void logout()} aria-label="Sign out" title="Sign out"><LogOut size={20}/></button></div></div>
   </aside>
   <div className="portal-body">
    <header className="portal-header">
@@ -70,10 +86,10 @@ export function Portal({path,logout}:{path:string;logout:()=>Promise<void>}){
      <button className={'icon-button header-control '+(panel==='search'?'active':'')} aria-label={searchTarget.label} aria-expanded={panel==='search'} aria-controls="workspace-search-panel" onClick={event=>togglePanel('search',event.currentTarget)}><Search size={21}/></button>
      <button className={'icon-button header-control notification-toggle '+(panel==='notifications'?'active':'')} aria-label="Notifications" aria-expanded={panel==='notifications'} aria-controls="workspace-notifications-panel" onClick={event=>togglePanel('notifications',event.currentTarget)}><Bell size={21}/>{notices.length>0&&<i/>}</button>
      <ThemeToggle/>
-     <button className={'header-avatar '+(panel==='account'?'active':'')} aria-label={'Open account menu for '+u.name} aria-expanded={panel==='account'} aria-controls="workspace-account-panel" onClick={event=>togglePanel('account',event.currentTarget)}>{initials}</button>
+     <button className={'header-avatar '+(panel==='account'?'active':'')} aria-label={'Open account menu for '+u.name} aria-expanded={panel==='account'} aria-controls="workspace-account-panel" onClick={event=>togglePanel('account',event.currentTarget)}><UserAvatar name={u.name} src={u.avatar_url} className="header-user-avatar" size={42}/></button>
      {panel==='search'&&<section className="header-popover workspace-search-panel" id="workspace-search-panel" role="dialog" aria-labelledby="workspace-search-title"><div className="popover-heading"><h3 id="workspace-search-title">{searchTarget.label}</h3><button className="icon-button" aria-label="Close search" onClick={()=>{setPanel(null);triggerRef.current?.focus()}}><X size={19}/></button></div><form onSubmit={searchWorkspace}><label className="workspace-search-input"><Search size={20}/><input ref={searchRef} aria-label={searchTarget.label} value={query} onChange={event=>setQuery(event.target.value)} placeholder={searchTarget.placeholder}/></label><div className="workspace-search-submit"><span>Press Enter to search</span><button type="submit" className="btn small">Search<ArrowUpRight size={16}/></button></div></form></section>}
      {panel==='notifications'&&<section className="header-popover notification-panel" id="workspace-notifications-panel" role="dialog" aria-labelledby="workspace-notifications-title"><div className="popover-heading"><h3 id="workspace-notifications-title">Workspace activity</h3><button className="icon-button" onClick={()=>{setPanel(null);triggerRef.current?.focus()}} aria-label="Close notifications"><X size={19}/></button></div>{notices.length?notices.map((notice,index)=><div className="notification-item" key={index}><span><Clock size={18}/></span><div><strong>{notice.title}</strong><small>{date(notice.at)}</small></div></div>):<p>No updates yet. Your next milestone will appear here.</p>}<small className="notification-note">Latest records from your workspace</small></section>}
-     {panel==='account'&&<section className="header-popover account-panel" id="workspace-account-panel" role="dialog" aria-labelledby="workspace-account-title"><div className="account-summary"><span className="avatar">{initials}</span><div><h3 id="workspace-account-title">{u.name}</h3><p>{u.email}</p><small>{roleLabel}</small></div></div><div className="account-actions" onClick={event=>{if((event.target as HTMLElement).closest('a'))setPanel(null)}}>{profileRoute&&<Link to={profileRoute}><UserRound size={20}/>{role==='student'?'My profile':'Company profile'}<ChevronRight size={16}/></Link>}<button onClick={()=>{setPanel(null);void logout()}}><LogOut size={20}/>Sign out</button></div></section>}
+     {panel==='account'&&<section className="header-popover account-panel" id="workspace-account-panel" role="dialog" aria-labelledby="workspace-account-title"><div className="account-summary"><UserAvatar name={u.name} src={u.avatar_url} className="avatar" size={40}/><div><h3 id="workspace-account-title">{u.name}</h3><p>{u.email}</p><small>{roleLabel}</small></div></div><div className="account-actions" onClick={event=>{if((event.target as HTMLElement).closest('a'))setPanel(null)}}><input ref={photoInputRef} type="file" hidden accept="image/jpeg,image/png,image/webp" aria-label="Choose a new profile photo" disabled={photoBusy} onChange={event=>{const file=event.currentTarget.files?.[0];event.currentTarget.value='';if(file)void changePhoto(file)}}/><button type="button" disabled={photoBusy} aria-busy={photoBusy} onClick={()=>photoInputRef.current?.click()}>{photoBusy?<LoaderCircle size={20} className="spin"/>:<UserRound size={20}/>}<span>{photoBusy?'Uploading photo…':'Change photo'}</span></button><p className="account-photo-help">JPEG, PNG or WebP · up to 2 MB</p>{photoError&&<p className="account-photo-error" role="alert">{photoError}</p>}{profileRoute&&<Link to={profileRoute}><UserRound size={20}/>{role==='student'?'My profile':'Company profile'}<ChevronRight size={16}/></Link>}<button onClick={()=>{setPanel(null);void logout()}}><LogOut size={20}/>Sign out</button></div></section>}
     </div>
    </header>
    <main id="main-content" className="workspace-main">{!segment?<Dashboard/>:role==='student'?<Student key={locationSearch+':'+searchRevision} path={path}/>:role==='recruiter'?<Recruiter key={locationSearch+':'+searchRevision} path={path}/>:<Admin key={locationSearch+':'+searchRevision} path={path}/>}</main>
@@ -84,7 +100,7 @@ export function Portal({path,logout}:{path:string;logout:()=>Promise<void>}){
 
 function Dashboard(){const {data}=useApp(),{user:u,jobs,applications:apps}=data;
  if(u.role==='student'){
- const eligible=jobs.filter(j=>u.cgpa>=j.min_cgpa&&JSON.parse(j.departments).includes(u.department)&&!!u.resume),active=apps.filter(a=>!['Selected','Rejected'].includes(a.status)),first=u.name.split(' ')[0];
+ const eligible=jobs.filter(j=>isOpenDeadline(j.deadline)&&u.cgpa>=j.min_cgpa&&JSON.parse(j.departments).includes(u.department)&&!!u.resume),active=apps.filter(a=>!['Selected','Rejected'].includes(a.status)),first=u.name.split(' ')[0];
  return <><PageHead eyebrow="YOUR CAREER, IN MOTION" title={`Good things ahead, ${first}.`} description="Here’s where you stand; and where you could go next."><span className="date-chip"><Clock size={14}/>{new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</span></PageHead><div className="welcome-banner"><div><span className="banner-label"><span/>YOUR NEXT CHAPTER IS OPEN</span><h2>Big ambitions.<br/>Better beginnings.</h2><p>Your next opportunity might be one application away.</p><Link to="/student/opportunities" className="btn light small">Explore opportunities<ArrowUpRight size={16}/></Link></div><div className="banner-art"><span>✳</span><svg viewBox="0 0 220 160"><path d="M42 150V67C42-14 178-14 178 67V150H150V70C150 18 70 18 70 70V150Z" fill="#bccf94"/><path d="M70 92L154 143M70 112L134 150M70 132L104 151" stroke="#dfe8b9" strokeWidth="13"/><path d="M180 35L207 50M190 22L202 8" stroke="#dfe8b9" strokeWidth="2"/></svg><span className="banner-caption">POTENTIAL → POSSIBILITY</span></div></div><div className="metrics-grid"><Metric label="Eligible opportunities" value={eligible.length.toString().padStart(2,'0')} detail="A match for your profile" icon={Compass}/><Metric label="Active applications" value={active.length.toString().padStart(2,'0')} detail="Your journey is moving forward" icon={Briefcase}/><Metric label="Interview stage" value={apps.filter(a=>a.status==='Interview').length.toString().padStart(2,'0')} detail="Time to make your impression" icon={Users}/><Metric label="Offers received" value={apps.filter(a=>['Offered','Selected'].includes(a.status)).length.toString().padStart(2,'0')} detail="A new chapter within reach" icon={CheckCircle2} accent/></div><div className="section-heading"><div><h2>Picked for your potential <span className="small-star">✳</span></h2><p>Openings that fit your profile and your next step.</p></div><Link to="/student/opportunities" className="text-link">View all opportunities<ArrowUpRight size={15}/></Link></div>{jobs.length?<div className="job-grid dashboard-jobs">{(eligible.length?eligible:jobs).slice(0,3).map(j=><JobCard key={j.id} job={j}/>)}</div>:<Empty title="Your next opportunity is on its way" description="Approved openings will appear here."/>}<div className="dashboard-lower"><section className="panel"><div className="panel-heading"><h2>Your applications</h2><Link to="/student/applications">View all<ArrowUpRight size={15}/></Link></div>{apps.length?<div className="compact-apps">{apps.slice(0,3).map(a=><Link key={a.id} to={'/student/applications/'+a.id} className="compact-app"><Logo name={a.company_name} logo={a.logo} color={a.color} size="small"/><div><strong>{a.title}</strong><small>{a.company_name} · Applied {date(a.created_at,{day:'numeric',month:'short'})}</small></div><Badge value={a.status}/><ChevronRight size={15}/></Link>)}</div>:<Empty title="Start something good" description="Your applications will appear here after you apply."/>}</section><section className="profile-nudge"><span><UserRound size={20}/></span><h3>Your profile opens doors.</h3><p>{u.resume?'Your resume is ready. Keep your skills and academic details up to date.':'Add your resume and academic details to unlock eligible applications.'}</p><div className="profile-progress"><div style={{width:`${[u.department,u.cgpa,u.resume,u.bio].filter(Boolean).length*25}%`}}/></div><small>{[u.department,u.cgpa,u.resume,u.bio].filter(Boolean).length*25}% profile complete</small><Link to="/student/profile" className="text-link">Make it yours<ArrowUpRight size={16}/></Link></section></div></>
  }
  const admin=u.role==='admin',pendingC=data.companies.filter(c=>c.status==='pending'),pendingJ=jobs.filter(j=>j.status==='pending');

@@ -2,9 +2,9 @@
 @font-face{font-family:Satoshi;src:url('/fonts/satoshi-variable.woff2') format('woff2');font-weight:300 900;font-style:normal;font-display:swap}
 @font-face{font-family:'General Sans';src:url('/fonts/general-sans-variable.woff2') format('woff2');font-weight:200 700;font-style:normal;font-display:swap}
 @font-face{font-family:'General Sans';src:url('/fonts/general-sans-variable-italic.woff2') format('woff2');font-weight:200 700;font-style:italic;font-display:swap}
-:root{--font:'General Sans',Arial,sans-serif;--display:Satoshi,'General Sans',Arial,sans-serif}
-body{font-synthesis:none}
-h1,h2,h3,h4{font-family:var(--display);letter-spacing:-.045em}
+:root{--font:Satoshi,'General Sans',Arial,sans-serif;--display:Satoshi,'General Sans',Arial,sans-serif}
+body{font-synthesis:none;font-size:15px;line-height:1.6;font-weight:450}
+h1,h2,h3,h4{font-family:var(--display);letter-spacing:-.025em;text-wrap:balance}
 .auth-page .serif-word{font-family:var(--display);font-style:normal;font-weight:500;letter-spacing:-.06em}
 .appearance-control{min-height:36px;padding:7px 10px;gap:7px;border:1px solid var(--line);border-radius:7px;color:var(--ink);font-size:11px;font-weight:500;transition:background .2s,border-color .2s}
 .appearance-control:hover{background:var(--white);border-color:#afc09d}
@@ -23,3 +23,76 @@ html[data-theme='dark'] .appearance-control:hover{background:#293f2b}
 @media(max-width:480px){.landing-nav{padding-inline:18px}.landing-nav .brand{font-size:19px;gap:7px;letter-spacing:-.8px}.landing-nav .brand-symbol{width:29px;height:29px}.landing-nav .nav-actions{gap:8px}.landing-nav .login-link{display:none}.landing-nav .nav-actions .btn{font-size:10px;padding:10px 11px;gap:6px}.landing-nav .appearance-control{width:34px;height:34px;min-height:34px;padding:7px}.portal .portal-header .appearance-control{width:34px;height:34px;padding:7px;gap:0}.portal-header .appearance-label{display:none}.portal-header .appearance-control svg{width:18px;height:18px}}
 @media(max-width:360px){.landing-nav{padding-inline:14px}.landing-nav .brand{font-size:17px;gap:6px}.landing-nav .nav-actions .btn{font-size:9px;padding-inline:10px;gap:5px}}
 @media(prefers-reduced-motion:reduce){.appearance-control{transition:none}}
+
+/* A readable scale shared by the public pages and all three workspaces. */
+.landing .hero h1{font-size:clamp(64px,7.1vw,94px);line-height:1.08;letter-spacing:-.038em;font-weight:650}
+.landing .hero h1 .serif-word{letter-spacing:inherit;font-weight:550}
+.landing .hero-copy>p{font-size:16px;line-height:1.8;max-width:44ch;font-weight:450}
+.landing .nav-links,.landing .login-link{font-size:14px;font-weight:600}
+.landing .hero-actions .text-link{font-size:14px}
+.landing .section-intro h2,.landing .journey-heading h2,.landing .cta-section h2{letter-spacing:-.035em;line-height:1.15}
+.landing .section-intro>p,.landing .benefit-card>p,.landing .journey-heading>p,.landing .journey-step p,.landing .workspace-card>p{font-size:15px;line-height:1.75;max-width:58ch}
+.landing .benefit-card h3,.landing .journey-step h3,.landing .workspace-card h3{letter-spacing:-.02em;font-weight:650;line-height:1.35}
+.landing .workspace-card li,.landing .workspace-card .text-link{font-size:14px;line-height:1.6}
+.btn,.btn.large,.text-link{font-size:14px;font-weight:600;letter-spacing:0}
+.btn.small{font-size:13px;min-height:40px}
+.eyebrow{font-size:11px;letter-spacing:.12em;font-weight:650;line-height:1.6}
+.portal .page-head h1{font-size:clamp(28px,2.8vw,38px);font-weight:650;letter-spacing:-.03em;line-height:1.25;max-width:30ch}
+.portal .page-head p{font-size:15px;line-height:1.65;max-width:64ch;margin-top:10px}
+.portal .page-head .eyebrow{font-size:11px;letter-spacing:.1em}
+.portal .section-heading h2,.portal .panel-heading h2,.portal .form-section-header h2{font-size:20px;letter-spacing:-.02em;line-height:1.4;font-weight:650}
+.portal .section-heading p,.portal .form-section-header p{font-size:14px;line-height:1.6}
+.portal .sidebar .brand{font-size:23px;letter-spacing:-.035em}
+.portal .sidebar .sidebar-nav>a{font-size:14px;font-weight:500;line-height:1.45}
+.portal .sidebar .sidebar-nav>a.active{font-weight:650}
+.portal .sidebar .campus-switch strong,.portal .sidebar .sidebar-user strong{font-size:13px;font-weight:600}
+.portal .sidebar .campus-switch small,.portal .sidebar .sidebar-user small,.portal .sidebar .nav-group-label{font-size:11px;line-height:1.5}
+.portal .portal-header .breadcrumb,.portal .portal-header .breadcrumb strong{font-size:14px}
+.portal .portal-header .account-summary p,.portal .portal-header .account-actions>a,.portal .portal-header .account-actions>button{font-size:14px}
+.portal .portal-header .account-photo-help,.portal .portal-header .account-summary small{font-size:12px}
+.portal .portal-header .notification-item strong{font-size:14px}
+.portal .portal-header .notification-item small{font-size:12px}
+.portal .metric-top>span{font-size:13px;line-height:1.5;font-weight:550}
+.portal .metric>strong{font-size:36px;font-weight:650;letter-spacing:-.035em;line-height:1.25;font-variant-numeric:tabular-nums}
+.portal .metric-detail{font-size:12px;line-height:1.5}
+.portal table{font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums}
+.portal table th{font-size:12px;font-weight:600;letter-spacing:.02em;line-height:1.5}
+.portal table td{font-size:13px;line-height:1.6}
+.portal .table-company strong,.portal .table-student strong,.portal .compact-app strong{font-size:14px;font-weight:600;letter-spacing:-.01em}
+.portal .table-company small,.portal .table-student small,.portal .compact-app small{font-size:12px;line-height:1.55}
+.portal .table-link,.portal .panel-heading>a,.portal .back-link{font-size:13px;font-weight:600}
+.portal .badge{font-size:11px;font-weight:600;line-height:1.5}
+.portal .job-card h3{font-size:20px;font-weight:650;letter-spacing:-.025em;line-height:1.35}
+.portal .company-name{font-size:13px;font-weight:550}
+.portal .job-meta,.portal .tags>span,.portal .job-foot,.portal .eligibility{font-size:12px;line-height:1.5}
+.portal .job-card-bottom>strong{font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:-.015em}
+.portal .job-card-bottom small{font-size:11px}
+.portal form label,.portal .filters label{font-size:13px;font-weight:550;line-height:1.55}
+.portal input,.portal select,.portal textarea,.portal .searchbox input{font-size:14px;line-height:1.5;font-weight:450}
+.portal form label>small,.portal .form-footer>span,.portal .page-note,.portal .info-list dt{font-size:12px;line-height:1.6}
+.portal .info-list dd,.portal .detail-panel>p,.portal .detail-tip p,.portal .profile-preview-bio{font-size:14px;line-height:1.7}
+.portal .timeline-step h4{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.portal .timeline-step p,.portal .timeline-step small{font-size:13px;line-height:1.6}
+.portal .date-chip{font-size:12px;line-height:1.5;padding:10px 14px;color:var(--ink);background:var(--white);border:1px solid var(--line)}
+.portal .review-feedback{margin:20px 0 0;padding:16px 18px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:14px;line-height:1.65}
+.portal .upload-label,.portal .upload-copy>strong{font-size:13px;line-height:1.5}
+.portal .upload-copy>span,.portal .upload-current-link,.portal .upload-success,.portal .upload-error{font-size:12px;line-height:1.6}
+.portal .upload-choose{font-size:13px;font-weight:600;min-height:40px}
+.portal .skills-label,.portal .skills-trigger,.portal .skills-option{font-size:14px}
+.portal .skills-helper,.portal .skills-results-summary,.portal .skills-chip{font-size:12px;line-height:1.5}
+html[data-theme='dark'] .portal .date-chip{background:#263c2d;color:#e7f0e3;border-color:#415747}
+html[data-theme='dark'] .portal .review-feedback{background:#263c2d;color:#e7f0e3;border-color:#415747}
+.portal{--muted:#69776b}
+.portal form label,.portal input,.portal select,.portal textarea,.portal table td{color:var(--ink)}
+.portal .page-head p,.portal .form-section-header p,.portal .table-company small,.portal .table-small,.portal .job-meta{color:var(--muted)}
+.portal .tabs>button{font-size:13px;font-weight:550;min-height:40px;line-height:1.5}
+html[data-theme='dark'] .portal{--ink:#e7efe8;--muted:#b1bfb2}
+html[data-theme='dark'] .portal .table-link,html[data-theme='dark'] .portal .panel-heading>a{color:#dcebcf}
+.auth-main .auth-form-wrap h1{font-size:clamp(30px,3vw,40px);line-height:1.2;letter-spacing:-.03em;font-weight:650}
+.auth-main .auth-form-wrap>p{font-size:15px;line-height:1.65}
+.auth-main form label{font-size:14px;line-height:1.5;font-weight:550}
+.auth-main form input,.auth-main form select{font-size:15px;line-height:1.5}
+.auth-main .clerk-auth-form .cl-formFieldLabel,.auth-main .clerk-auth-form .cl-footerActionText,.auth-main .clerk-auth-form .cl-footerActionLink,.auth-main .clerk-auth-form .cl-socialButtonsBlockButtonText{font-size:14px}
+.auth-main .auth-secure{font-size:12px!important}
+@media(max-width:760px){.landing .hero h1{font-size:clamp(56px,10vw,78px)}.landing .hero-copy>p{font-size:16px}.portal .page-head h1{font-size:30px}.portal .page-head p{font-size:14px}}
+@media(max-width:480px){.landing .hero h1{font-size:clamp(46px,13.5vw,64px);letter-spacing:-.04em;line-height:1.1}.landing .hero-copy>p{font-size:15px}.landing .hero-actions .text-link{font-size:13px}.landing .nav-actions .btn{font-size:12px}.portal .page-head h1{font-size:28px}.portal .portal-header .breadcrumb strong{font-size:13px}.portal .metric>strong{font-size:30px}}

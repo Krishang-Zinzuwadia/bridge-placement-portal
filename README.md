@@ -32,7 +32,7 @@ For frontend hot reload, keep `npm run preview` running, then run `npm run dev` 
 
 All mock accounts use **`Campus@2026`**. Quick demo buttons are also available on `/login`.
 
-These mock credentials apply to the **reviewer demo**. The real-account app uses Clerk Google sign-in and verified email/password registration; it has its own D1 database and no shared seeded accounts. After verification, new users choose Student or Recruiter. An institution operator provisions admin access for an existing verified Clerk subject.
+These mock credentials apply to the **reviewer demo**. The real-account app uses Clerk Google sign-in and verified email/password registration with its own D1 database. At the project owner's request, that live database also contains illustrative sample companies, openings, applications, and legacy mock records. Mock passwords cannot sign in to the Clerk environment, and a matching email cannot claim a legacy record. After verification, new users choose Student or Recruiter. An institution operator provisions admin access for an existing verified Clerk subject.
 
 | Role | Email | Sample account |
 | --- | --- | --- |
@@ -50,6 +50,8 @@ Companies, institute, people, opportunities, and activity are illustrative demo 
 ```sh
 node scripts/generate-seed.mjs
 npx wrangler d1 execute campusbridge-portal-db --local --file scripts/seed.sql
+# Optional: populate the dedicated live database with the same illustrative records.
+npx wrangler d1 execute campusbridge-live-db --remote --env production --file scripts/seed.sql
 ```
 
 ## Cloudflare deployment
@@ -81,9 +83,10 @@ Do not create a second database if you are deploying to the already configured a
 ## Workflows
 
 - **Public:** editorial landing page, responsive navigation, product overview, role explanations, FAQs, registration and login.
-- **Company showcase:** twelve sample company wordmarks in a continuously moving ticker, with hover/focus/manual pause, a seamless loop, and a static scrollable alternative under reduced motion.
+- **Company showcase:** twelve sample company wordmarks in a continuously moving ticker, with hover/focus pause, a seamless loop, and a static scrollable alternative under reduced motion.
 - **Student:** dashboard, approved opportunity discovery, search/type/work-mode/eligibility filters, saved openings, job detail, application confirmation, application lists and timelines, profile editor.
-- **Skills:** exactly250 distinct skills in ten categories, with search, multiple selection, chips, clear/remove controls, keyboard navigation, persistent profile/posting selections, and opportunity filtering. Both frontend and Worker use `shared/skills.json` as the catalog.
+- **Files and photos:** PDF resume picker with a 5 MiB limit and server file validation; Google/Clerk account photo by default; JPEG, PNG, or WebP photo replacement with a 2 MiB limit. Files live in private Cloudflare R2 buckets and use authenticated previews. A lazy-loaded, self-hosted [PDF.js](https://mozilla.github.io/pdf.js/examples/) viewer displays private PDFs inside the workspace, with page controls and a download option. Resume replacement preserves the version attached to an existing application. See [upload contracts and permissions](docs/uploads.md).
+- **Skills:** exactly 250 distinct skills in ten categories, with search, multiple selection, chips, clear/remove controls, keyboard navigation, persistent profile/posting selections, and opportunity filtering. Both frontend and Worker use `shared/skills.json` as the catalog.
 - **Recruiter:** company profile submission, posting creation/editing/drafts/closing, approval feedback, owned candidate list, submitted profile/resume review, CSV export, single and batch stage transitions.
 - **Admin:** separate company/posting queues, complete review pages, approval/rejection with feedback, application oversight, searchable audit log with reviewer IDs and timestamps.
 
@@ -100,7 +103,9 @@ npm run build
 
 The test suite covers eligibility thresholds, department/resume gating, role authorization, password checks, scoped state, duplicate submission, snapshot persistence, recruiter ownership, all-or-nothing batch validation, status history, company-before-posting approval, rejection reasons, audit timestamps/reviewer IDs, admin signup blocking, expired/revoked sessions, and cross-origin request rejection. Integration tests use Node's built-in SQLite to execute the actual Worker queries against the actual schema and seed. Node 22 may print an experimental SQLite warning.
 
-The current suite has **55 passing tests**, including real Clerk SDK signature/expiry/origin/issuer checks, public-key-only configuration, legacy-auth refusal in Clerk mode, verified-email onboarding, no email-based account claiming, persisted D1 roles, and validated profile skills. A temporary provider-created QA account was also tested with a real Frontend API origin-bound Clerk session against the live Worker; onboarding, profile/skills persistence, permission denial, and legacy login refusal passed. The QA identity and D1 profile were removed afterward.
+The current suite has **75 passing tests**, including real Clerk SDK signature/expiry/origin/issuer checks, public-key-only configuration, legacy-auth refusal in Clerk mode, verified-email onboarding, no email-based account claiming, persisted D1 roles, validated profile skills, file size/type validation, private file permissions, immutable snapshots, avatar replacement, invalid calendar deadlines, and opaque/malformed mutation origins. A temporary provider-created QA account was also tested with a real Frontend API origin-bound Clerk session against the live Worker: actual R2 PDF/image upload and byte-for-byte download, provider-photo import, custom-photo persistence, anonymous download denial, spoofed PDF rejection, profile saving, and sample-opening visibility passed. The temporary QA identity, D1 records, and uploaded objects were removed afterward.
+
+Three independent role reviews are recorded in [student QA](docs/qa-student.md), [recruiter QA](docs/qa-recruiter.md), and [admin QA](docs/qa-admin.md). Reports distinguish browser, HTTP, source, and component checks, record disposable fixture changes, and track each finding's resolution.
 
 ## Reviewer walkthrough
 
@@ -115,3 +120,5 @@ The current suite has **55 passing tests**, including real Clerk SDK signature/e
 `src/Landing.tsx`, `src/Auth.tsx`, and `src/Portal.tsx` define public/entry/shared layouts. `src/Student.tsx`, `src/Recruiter.tsx`, and `src/Admin.tsx` implement role workflows. `src/core.tsx` contains shared UI, API access, and modal keyboard behavior. `worker/index.mjs` handles sessions and the API; `worker/rules.mjs` contains business rules. D1 schema lives in `migrations/0001_schema.sql`; demo population lives in `scripts/`.
 
 The layout adapts to mobile with a collapsible sidebar, opportunity cards, scrollable data tables, and stacked detail/forms. Modal dialogs trap keyboard focus, restore focus on close, and support Escape. Motion respects reduced-motion preferences. The landing hero is generated 3D architectural artwork; the logo and auth illustration are original SVG. Satoshi and General Sans are self-hosted, unmodified, with their original ITF Free Font Licenses and source records. Light/dark appearance controls sit in the navbar and workspace header. Header search is icon-only with a working popover; the avatar opens an account menu. The landing footer and visible Live updates indicators were removed. Design refinements use the installed taste-skill guidance.
+
+The typography uses Satoshi consistently for interface text, a larger readable label/table scale, tabular numbers, and restrained heading tracking. Landing navigation reads Why, How, and Campus. The company ticker has no visible caption or pause button; focus/hover pause and reduced-motion support remain. Clerk forms have explicit theme-aware input, button, border, and link colors.

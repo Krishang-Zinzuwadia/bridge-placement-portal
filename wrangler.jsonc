@@ -26,12 +26,14 @@
   "observability": {
     "enabled": true
   },
+  "r2_buckets": [{"binding":"UPLOADS","bucket_name":"campusbridge-demo-uploads"}],
   "vars": {
     "AUTH_MODE": "demo"
   },
   "env": {
     "production": {
       "name": "campusbridge-live",
+      "r2_buckets": [{"binding":"UPLOADS","bucket_name":"campusbridge-live-uploads"}],
       "vars": {
         "AUTH_MODE": "clerk",
         "CLERK_AUTHORIZED_PARTIES": "https://campusbridge-live.krishangzinzuwadia.workers.dev",

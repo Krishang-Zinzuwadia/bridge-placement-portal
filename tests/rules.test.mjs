@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {eligibility,canTransition,authorize} from '../worker/rules.mjs';
+import {eligibility,canTransition,authorize,isOpenDeadline} from '../worker/rules.mjs';
+test('shared deadline gate keeps today open and refuses expired or impossible dates',()=>{
+ const noon=Date.parse('2030-10-07T12:00:00Z');
+ assert.equal(isOpenDeadline('2030-10-07',noon),true);
+ assert.equal(isOpenDeadline('2030-10-06',noon),false);
+ assert.equal(isOpenDeadline('2030-99-99',noon),false);
+ assert.equal(isOpenDeadline('2031-02-29',noon),false);
+ assert.equal(isOpenDeadline('2032-02-29',noon),true);
+ assert.equal(isOpenDeadline(null,noon),false);
+});
 test('rejects a student below the CGPA threshold',()=>assert.match(eligibility({cgpa:7.2,department:'CSE',resume:'https://example.com/r'},{min_cgpa:8,departments:'["CSE"]'}).reason,/8/));
 test('rejects a department outside the allowed list',()=>assert.equal(eligibility({cgpa:9,department:'ECE',resume:'https://example.com/r'},{min_cgpa:8,departments:'["CSE"]'}).eligible,false));
 test('accepts CGPA exactly at the threshold',()=>assert.equal(eligibility({cgpa:8,department:'CSE',resume:'https://example.com/r'},{min_cgpa:8,departments:'["CSE"]'}).eligible,true));

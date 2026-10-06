@@ -1,6 +1,7 @@
 import {normalizeSkills} from './skills.mjs';
-import {authorize,eligibility,canTransition} from './rules.mjs';
-import {authConfig,verifyClerkIdentity,providerProfile,provisionAccount} from './identity.mjs';
+import {authorize,eligibility,canTransition,isOpenDeadline} from './rules.mjs';
+import {authConfig,verifyClerkIdentity,providerProfile,provisionAccount,syncProviderAvatar} from './identity.mjs';
+import {uploadFile,getUpload,validateResumeReference,multipartLimit} from './uploads.mjs';
 const json=(body,status=200,headers={})=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store',...headers}});
 const error=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const id=()=>crypto.randomUUID();
@@ -33,15 +34,19 @@ async function state(user,db){
 }
 async function api(request,env){
  const db=env.DB,url=new URL(request.url),path=url.pathname,method=request.method;
+ const uploadKind=method==='POST'?(path==='/api/resume'?'resume':path==='/api/avatar'?'avatar':null):null;
  if(path==='/api/auth/config'&&method==='GET')return json(authConfig(env));
  if(!db)error('Database is unavailable. Apply migrations and seed the database.',503);
  if(!['GET','HEAD'].includes(method)){
   const origin=request.headers.get('Origin');const local=['127.0.0.1','localhost'].includes(url.hostname);
-  if(origin&&origin!==url.origin&&!(local&&['127.0.0.1','localhost'].includes(new URL(origin).hostname)))error('Request origin is not allowed.',403);
-  if(Number(request.headers.get('Content-Length'))>40000)error('Request is too large.',413);
+  if(origin&&origin!==url.origin){
+   let source;try{source=new URL(origin)}catch{error('Request origin is not allowed.',403)}
+   if(!['http:','https:'].includes(source.protocol)||!(local&&['127.0.0.1','localhost'].includes(source.hostname)))error('Request origin is not allowed.',403);
+  }
+  if(Number(request.headers.get('Content-Length'))>(uploadKind?multipartLimit(uploadKind):40000))error('Request is too large.',413);
  }
  // Clerk's request adapter needs the original stream; parse a clone for mutations.
- const body=['GET','HEAD'].includes(method)||!request.body?{}:await request.clone().json().catch(()=>error('Send a valid JSON object.'));
+ const body=uploadKind||['GET','HEAD'].includes(method)||!request.body?{}:await request.clone().json().catch(()=>error('Send a valid JSON object.'));
  if(!body||typeof body!=='object'||Array.isArray(body))error('Send a valid JSON object.');
  const usesClerk=env.AUTH_MODE==='clerk';
  if(usesClerk&&['/api/login','/api/signup','/api/logout'].includes(path))error('Use Clerk to sign in, create an account or sign out.',409);
@@ -69,14 +74,18 @@ async function api(request,env){
    return json({user:publicUser(account)});
   }
   if(!account)throw Object.assign(new Error('Choose your role to finish setting up your workspace.'),{status:403,code:'ONBOARDING_REQUIRED'});
+  if(path==='/api/state'&&method==='GET')account=await syncProviderAvatar(db,env,identity,account);
  }else account=await session(request,db);
  const user=authorize(account);
+ if(uploadKind)return json(await uploadFile(request,env,user,uploadKind));
+ if(path.startsWith('/api/uploads/')&&method==='GET')return getUpload(request,env,user,path.slice('/api/uploads/'.length));
  if(path==='/api/state'&&method==='GET')return json(await state(user,db));
  if(path==='/api/logout'&&method==='POST'){const token=request.headers.get('Cookie')?.match(/cb_session=([^;]+)/)?.[1];await db.prepare('DELETE FROM sessions WHERE token=?').bind(token||'').run();return json({ok:true},200,{'Set-Cookie':cookie('',request,true)});}
  if(path==='/api/profile'&&method==='PUT'){
   authorize(user,'student');const {name,department,cgpa,graduation_year,resume,bio}=body;
   if(!name||!['CSE','IT','ECE','EEE','ME','CE','MBA'].includes(department)||!Number.isFinite(Number(cgpa))||Number(cgpa)<0||Number(cgpa)>10||!Number.isInteger(Number(graduation_year))||Number(graduation_year)<2024||Number(graduation_year)>2035||!safeUrl(resume))error('Enter a valid name, department, CGPA (0–10), graduation year and an HTTP(S) resume link.');
   const selectedSkills=body.skills===undefined?(user.skills||'[]'):JSON.stringify(normalizeSkills(body.skills));
+  await validateResumeReference(db,user,resume,request);
   await db.prepare('UPDATE users SET name=?,department=?,cgpa=?,graduation_year=?,resume=?,bio=?,skills=? WHERE id=?').bind(String(name).slice(0,100),department,Number(cgpa),Number(graduation_year),String(resume||'').slice(0,2000),String(bio||'').slice(0,2000),selectedSkills,user.id).run();return json({ok:true});
  }
  if(path==='/api/company'&&method==='PUT'){
@@ -88,14 +97,14 @@ async function api(request,env){
   authorize(user,'recruiter');const company=await db.prepare('SELECT * FROM companies WHERE owner_id=?').bind(user.id).first();if(!company)error('Create a company profile first.');
   const jid=path.split('/')[3];if(method==='PUT'){const old=await db.prepare('SELECT * FROM jobs WHERE id=? AND company_id=?').bind(jid,company.id).first();if(!old)error('Posting not found.',404);if(body.close){await db.prepare("UPDATE jobs SET status='closed' WHERE id=?").bind(jid).run();return json({ok:true});}}
   const {title,type,location,mode,salary,min_cgpa,departments,deadline,description,skills}=body;
-  if(!title||!['Full-time','Internship'].includes(type)||!location||!salary||!Number.isFinite(Number(min_cgpa))||Number(min_cgpa)<0||Number(min_cgpa)>10||!Array.isArray(departments)||!departments.length||departments.some(d=>!['CSE','IT','ECE','EEE','ME','CE','MBA'].includes(d))||!/^\d{4}-\d{2}-\d{2}$/.test(deadline)||new Date(deadline+'T23:59:59Z').getTime()<Date.now()||!description)error('Complete every required field, select valid departments, and choose a future deadline.');
+  if(!title||!['Full-time','Internship'].includes(type)||!location||!salary||!Number.isFinite(Number(min_cgpa))||Number(min_cgpa)<0||Number(min_cgpa)>10||!Array.isArray(departments)||!departments.length||departments.some(d=>!['CSE','IT','ECE','EEE','ME','CE','MBA'].includes(d))||!isOpenDeadline(deadline)||!description)error('Complete every required field, select valid departments, and choose a future deadline.');
   const vals=[String(title).slice(0,150),type,String(location).slice(0,100),String(mode||'Hybrid').slice(0,30),String(salary).slice(0,100),Number(min_cgpa),JSON.stringify(departments),deadline,String(description).slice(0,10000),JSON.stringify(normalizeSkills(skills||[])),body.draft?'draft':'pending'];
   if(method==='POST')await db.prepare('INSERT INTO jobs(id,company_id,title,type,location,mode,salary,min_cgpa,departments,deadline,description,skills,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(id(),company.id,...vals).run();
   else await db.prepare("UPDATE jobs SET title=?,type=?,location=?,mode=?,salary=?,min_cgpa=?,departments=?,deadline=?,description=?,skills=?,status=?,reason='' WHERE id=?").bind(...vals,jid).run();return json({ok:true});
  }
  if(path==='/api/apply'&&method==='POST'){
   authorize(user,'student');const job=await db.prepare("SELECT j.* FROM jobs j JOIN companies c ON j.company_id=c.id WHERE j.id=? AND j.status='approved' AND c.status='approved'").bind(body.job_id).first();if(!job)error('This opening is not available.',404);
-  if(new Date(job.deadline+'T23:59:59Z').getTime()<Date.now())error('The application deadline has passed.',409);
+  if(!isOpenDeadline(job.deadline))error('The application deadline has passed.',409);
   const eligible=eligibility(user,job);if(!eligible.eligible)error(eligible.reason,403);
   if(await db.prepare('SELECT id FROM applications WHERE student_id=? AND job_id=?').bind(user.id,job.id).first())error('You have already applied for this opening.',409);
   const stamp=new Date().toISOString();try{await db.prepare('INSERT INTO applications(id,student_id,job_id,snapshot,history) VALUES(?,?,?,?,?)').bind(id(),user.id,job.id,JSON.stringify(publicUser(user)),JSON.stringify([{status:'Applied',at:stamp,by:user.id,note:'Application received'}])).run();}catch(e){if(String(e).includes('UNIQUE'))error('You have already applied for this opening.',409);throw e;}return json({ok:true});
