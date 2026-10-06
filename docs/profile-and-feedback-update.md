@@ -20,9 +20,9 @@ Both existing Workers were deployed from this update. Remote HTTP checks verifie
 
 | Worker | Deployed version |
 | --- | --- |
-| Reviewer demo | `1d0b1e32-4f38-437a-8d88-f3056d77ba2f` |
-| Real-account app | `0452475a-fd7f-47a2-aa28-512b33aa9c86` |
+| Reviewer demo | `6aa7e532-d2be-4c02-a7cf-fef10148deda` |
+| Real-account app | `77b1d731-46fd-4ecc-9c86-2ff24b04954c` |
 
 GitHub CI executed successfully for the pull request and its branch push: [PR validation](https://github.com/Krishang-Zinzuwadia/campusbridge-placement-portal/actions/runs/37525397829), [push validation](https://github.com/Krishang-Zinzuwadia/campusbridge-placement-portal/actions/runs/37525350184). These runs installed locked dependencies, validated workflows, linted, tested and built on Node 24.
 
-GitHub Actions/lint/deployment configuration and its credential requirements are documented in [CI/CD](ci-cd.md). Automatic deployment is not verified until its scoped Cloudflare secret is configured and a GitHub run succeeds. The user supplied an R2-only token; it does not provide the Worker/D1 permissions required by this workflow and was not stored in the repository or its secrets. Local authenticated Worker deployment is a separate verification path.
+GitHub Actions/lint/deployment configuration and its credential requirements are documented in [CI/CD](ci-cd.md). [Automatic deployment on main](https://github.com/Krishang-Zinzuwadia/campusbridge-placement-portal/actions/runs/37529205593) passed, including validation, both database/Worker updates and smoke checks. The correctly scoped Cloudflare secret is configured in GitHub, and the deployment environment is restricted to main. Fresh remote HTTP checks after this run again passed all three reviewer logins, correct identities/logout, current brand/assets, private upload configuration, anonymous denial and Clerk mock-login refusal.
